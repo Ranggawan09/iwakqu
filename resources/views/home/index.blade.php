@@ -67,10 +67,10 @@
         <div class="text-center mb-14">
             <span class="inline-block bg-green-100 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-3">Produk Unggulan</span>
             <h2 class="text-4xl font-black text-gray-900 mb-4">Ikan Marinasi <span class="text-green-700">Pilihan Kami</span></h2>
-            <p class="text-gray-500 max-w-xl mx-auto">10 pilihan ikan Nusantara dengan resep marinasi bumbu asli — diolah higienis, segar, siap masak, dan penuh cita rasa.</p>
+            <p class="text-gray-500 max-w-xl mx-auto">9 pilihan ikan Nusantara dengan resep marinasi bumbu asli — diolah higienis, segar, siap masak, dan penuh cita rasa.</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
             @foreach($products as $product)
             <div class="bg-white rounded-3xl overflow-hidden shadow-md card-hover border border-gray-100">
                 <div class="relative h-64 overflow-hidden">
@@ -80,7 +80,7 @@
                     <div class="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-full">
                         Stok: {{ $product->stock }}
                     </div>
-                    @if($product->stock < 10 && $product->stock > 0)
+                    @if($product->stock < 9 && $product->stock > 0)
                     <div class="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
                         Hampir Habis!
                     </div>
