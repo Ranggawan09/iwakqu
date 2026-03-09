@@ -136,7 +136,9 @@ class OrderController extends Controller
     // =========================================================================
     public function show(Order $order)
     {
-        if ($order->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+        $user = auth()->user();
+
+        if (!$user || ($order->user_id !== $user->id && !$user->isAdmin())) {
             abort(403);
         }
 
