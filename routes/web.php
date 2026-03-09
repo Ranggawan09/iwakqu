@@ -31,6 +31,11 @@ Route::post('/mayar/callback', [MayarController::class, 'callback'])
     ->name('mayar.callback')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
+// Mayar Payment Return — redirect target setelah user selesai bayar di Mayar
+// Tidak butuh auth agar session yang hilang saat redirect tidak menyebabkan error
+Route::get('/payment/return/{order}', [OrderController::class, 'paymentReturn'])
+    ->name('payment.return');
+
 // ─── Customer Routes (auth required) ─────────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
 

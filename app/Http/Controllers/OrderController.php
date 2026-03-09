@@ -278,7 +278,8 @@ class OrderController extends Controller
             'description' => $description ?: 'Ikan Marinasi IwakQu',
             'mobile'      => $order->phone,
             'email'       => auth()->user()->email,
-            'redirectUrl' => url('/orders/' . $order->id),
+            // Route publik agar tidak error 403 saat session hilang setelah redirect dari Mayar
+            'redirectUrl' => route('payment.return', $order),
         ];
 
         try {
