@@ -47,7 +47,7 @@
             <div><p class="text-gray-400">Metode Bayar</p><p class="font-semibold">{{ $order->payment_method ?? '-' }}</p></div>
             <div class="col-span-2"><p class="text-gray-400">Alamat</p><p class="font-semibold">{{ $order->address }}</p></div>
             @if($order->transaction_id)
-            <div class="col-span-2"><p class="text-gray-400">ID Transaksi Midtrans</p><p class="font-mono font-semibold text-xs">{{ $order->transaction_id }}</p></div>
+            <div class="col-span-2"><p class="text-gray-400">ID Transaksi Mayar</p><p class="font-mono font-semibold text-xs">{{ $order->transaction_id }}</p></div>
             @endif
         </div>
 

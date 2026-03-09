@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderRating;
 use App\Models\Setting;
-use Midtrans\Config;
-use Midtrans\Snap;
 
 class OrderController extends Controller
 {
@@ -38,7 +37,7 @@ class OrderController extends Controller
     }
 
     // =========================================================================
-    // Proses order — hitung ongkir, simpan order, buat snap token Midtrans
+    // Proses order — hitung ongkir, simpan order
     // =========================================================================
     public function placeOrder(Request $request)
     {
@@ -102,10 +101,15 @@ class OrderController extends Controller
 
         // ── Generate Mayar Payment Link ────────────────────────────────────────
         $referenceId = 'IWAKQU-' . $order->id . '-' . time();
-        $paymentLink = $this->createMayarPayment($order, $referenceId, $carts, $shippingCost, $distanceKm);
+        $mayarResult = $this->createMayarPayment($order, $referenceId, $carts, $shippingCost, $distanceKm);
+        $paymentLink = $mayarResult['link'] ?? null;
+        $mayarId     = $mayarResult['mayar_id'] ?? null;
 
         if ($paymentLink) {
-            $order->update(['payment_link' => $paymentLink]);
+            $order->update([
+                'payment_link' => $paymentLink,
+                'mayar_id'     => $mayarId,
+            ]);
         }
 
         // Clear cart
@@ -137,6 +141,13 @@ class OrderController extends Controller
         }
 
         $order->load('orderItems.product');
+
+        // Auto-sync status pembayaran dari Mayar API saat user kembali ke halaman ini.
+        // Ini berguna saat webhook tidak bisa menjangkau server lokal / dev environment.
+        if ($order->status === 'menunggu_pembayaran') {
+            $this->checkAndSyncMayarStatus($order);
+            $order->refresh(); // Reload agar status terbaru tampil
+        }
 
         return view('customer.orders.show', compact('order'));
     }
@@ -198,7 +209,7 @@ class OrderController extends Controller
                 'quantity' => $item->quantity,
             ]);
 
-            $paymentLink = $this->createMayarPayment(
+            $mayarResult = $this->createMayarPayment(
                 $order,
                 $referenceId,
                 $fakeItems,
@@ -206,13 +217,20 @@ class OrderController extends Controller
                 (float) ($order->distance_km ?? 0)
             );
 
+            $paymentLink = $mayarResult['link'] ?? null;
+            $mayarId     = $mayarResult['mayar_id'] ?? null;
+
             if ($paymentLink) {
-                $order->update(['payment_link' => $paymentLink]);
+                $order->update([
+                    'payment_link' => $paymentLink,
+                    'mayar_id'     => $mayarId,
+                ]);
             } else {
                 return redirect()->route('orders.show', $order)
                     ->with('error', 'Link pembayaran tidak tersedia. Silakan hubungi kami.');
             }
         }
+
         return redirect()->away($order->payment_link);
     }
 
@@ -220,13 +238,15 @@ class OrderController extends Controller
     // PRIVATE HELPERS
     // =========================================================================
 
-     /**
+    /**
      * Buat Payment Link via Mayar Headless API.
      * Endpoint  : POST https://api.mayar.id/hl/v1/payment/create
      * Required  : name, amount, mobile, email
-     * Response  : { data: { link: '...' } }
+     * Response  : { data: { link: '...', id: '...' } }
+     *
+     * @return array{link: string|null, mayar_id: string|null}|null
      */
-    private function createMayarPayment(Order $order, string $referenceId, $carts, float $shippingCost, float $distanceKm): ?string
+    private function createMayarPayment(Order $order, string $referenceId, $carts, float $shippingCost, float $distanceKm): ?array
     {
         $isProduction = config('services.mayar.is_production', false);
         $apiKey       = config('services.mayar.api_key', '');
@@ -235,7 +255,7 @@ class OrderController extends Controller
             : 'https://api.mayar.club/hl/v1';
 
         if (empty($apiKey)) {
-            \Illuminate\Support\Facades\Log::error('[Mayar] API key kosong, cek MAYAR_API_KEY di .env');
+            Log::error('[Mayar] API key kosong, cek MAYAR_API_KEY di .env');
             return null;
         }
 
@@ -279,7 +299,7 @@ class OrderController extends Controller
             $curlError = curl_error($ch);
             curl_close($ch);
 
-            \Illuminate\Support\Facades\Log::info('[Mayar] Payment create', [
+            Log::info('[Mayar] Payment create', [
                 'endpoint'  => $endpoint,
                 'http_code' => $httpCode,
                 'curl_err'  => $curlError ?: null,
@@ -295,26 +315,117 @@ class OrderController extends Controller
                     ?? $data['link']
                     ?? null;
 
-                if (!$link) {
-                    \Illuminate\Support\Facades\Log::warning('[Mayar] Link tidak ditemukan', ['data' => $data]);
+                // Ambil Mayar invoice/payment ID untuk keperluan status check
+                $mayarId = $data['data']['id']
+                    ?? $data['data']['paymentId']
+                    ?? $data['id']
+                    ?? null;
+
+                // Fallback: extract ID dari URL link (contoh: .../invoices/xxstjgnbu9)
+                if (!$mayarId && $link && preg_match('/\/invoices\/([a-z0-9]+)/i', $link, $m)) {
+                    $mayarId = $m[1];
                 }
-                return $link;
+
+                if (!$link) {
+                    Log::warning('[Mayar] Link tidak ditemukan', ['data' => $data]);
+                }
+
+                return ['link' => $link, 'mayar_id' => $mayarId];
             }
 
-            \Illuminate\Support\Facades\Log::error('[Mayar] API gagal', [
+            Log::error('[Mayar] API gagal', [
                 'http_code' => $httpCode,
                 'response'  => $response,
                 'curl_err'  => $curlError,
             ]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('[Mayar] Exception: ' . $e->getMessage());
+            Log::error('[Mayar] Exception: ' . $e->getMessage());
         }
 
         return null;
     }
 
     /**
-    
+     * Cek status pembayaran ke Mayar API dan update order jika sudah dibayar.
+     * Digunakan sebagai fallback saat webhook tidak bisa menjangkau server (misal: localhost/dev).
+     */
+    private function checkAndSyncMayarStatus(Order $order): void
+    {
+        // Butuh mayar_id untuk cek status; bisa dari DB atau extract dari payment_link URL
+        $mayarId = $order->mayar_id;
+
+        if (!$mayarId && $order->payment_link) {
+            // Extract dari URL: .../invoices/{id} atau .../pay/{id}
+            if (preg_match('/\/invoices\/([a-z0-9]+)/i', $order->payment_link, $m)) {
+                $mayarId = $m[1];
+            } elseif (preg_match('/\/pay\/([a-z0-9]+)/i', $order->payment_link, $m)) {
+                $mayarId = $m[1];
+            }
+        }
+
+        if (!$mayarId) {
+            Log::info('[Mayar] checkAndSyncMayarStatus: mayar_id tidak ditemukan', ['order_id' => $order->id]);
+            return;
+        }
+
+        $isProduction = config('services.mayar.is_production', false);
+        $apiKey       = config('services.mayar.api_key', '');
+        $baseUrl      = $isProduction
+            ? 'https://api.mayar.id/hl/v1'
+            : 'https://api.mayar.club/hl/v1';
+
+        if (empty($apiKey)) return;
+
+        try {
+            $endpoint = $baseUrl . '/payment/' . $mayarId;
+            $ch = curl_init($endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPGET        => true,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . $apiKey,
+                ],
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            Log::info('[Mayar] Status check', [
+                'order_id'  => $order->id,
+                'mayar_id'  => $mayarId,
+                'http_code' => $httpCode,
+                'response'  => $response ? substr($response, 0, 300) : null,
+            ]);
+
+            if ($response && $httpCode === 200) {
+                $data   = json_decode($response, true);
+                $status = $data['data']['status']
+                    ?? $data['data']['paymentStatus']
+                    ?? $data['status']
+                    ?? null;
+
+                if (in_array(strtolower((string) $status), ['paid', 'settlement', 'success'])) {
+                    $order->update([
+                        'status'         => 'dibayar',
+                        'transaction_id' => $data['data']['id'] ?? $order->transaction_id,
+                        'payment_method' => $data['data']['paymentType'] ?? $data['data']['payment_method'] ?? $order->payment_method,
+                        'mayar_id'       => $mayarId,
+                    ]);
+                    Log::info('[Mayar] Order diupdate ke dibayar via API check', ['order_id' => $order->id]);
+                } elseif (in_array(strtolower((string) $status), ['expired', 'failed', 'cancel', 'cancelled'])) {
+                    $order->update(['status' => 'dibatalkan']);
+                    Log::info('[Mayar] Order diupdate ke dibatalkan via API check', ['order_id' => $order->id]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('[Mayar] checkAndSyncMayarStatus exception: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Hitung jarak jalan nyata (km) via OSRM public API.
      * Profile: driving (paling mendekati sepeda motor).
      * Fallback otomatis ke Haversine jika OSRM tidak tersedia.
