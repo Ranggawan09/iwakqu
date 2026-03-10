@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 
 class MayarController extends Controller
@@ -48,12 +49,29 @@ class MayarController extends Controller
 
         // Update status order berdasarkan status Mayar
         match ($status) {
-                'paid', 'settlement' => $order->update([
-                'status' => 'dibayar',
-                'payment_method' => $paymentType,
-                'transaction_id' => $trxId,
-                'mayar_id' => $trxId,
-            ]),
+                'paid', 'settlement' => (function () use ($order, $paymentType, $trxId) {
+                // Guard: hanya kurangi stok jika status sebelumnya belum "dibayar"
+                $wasAlreadyPaid = $order->status === 'dibayar';
+
+                $order->update([
+                    'status' => 'dibayar',
+                    'payment_method' => $paymentType,
+                    'transaction_id' => $trxId,
+                    'mayar_id' => $trxId,
+                ]);
+
+                if (!$wasAlreadyPaid) {
+                    // Kurangi stok produk setelah pembayaran dikonfirmasi via webhook
+                    $order->loadMissing('orderItems');
+                    foreach ($order->orderItems as $item) {
+                        Product::where('id', $item->product_id)
+                            ->where('stock', '>', 0)
+                            ->decrement('stock', $item->quantity);
+                    }
+                    Log::info('[Stock] Stok dikurangi via webhook', ['order_id' => $order->id]);
+                }
+            })(),
+
                 'expired', 'failed', 'cancel' => $order->update([
                 'status' => 'dibatalkan',
             ]),

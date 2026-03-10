@@ -5,7 +5,7 @@
 <div class="py-12 min-h-screen bg-gray-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-black text-gray-900 mb-8 flex items-center gap-3">
-            🛒 Keranjang Belanja
+            Keranjang Belanja
             @if($carts->count() > 0)
                 <span class="bg-green-700 text-white text-base font-bold px-3 py-1 rounded-full">{{ $carts->count() }} item</span>
             @endif

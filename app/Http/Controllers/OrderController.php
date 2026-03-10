@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderRating;
+use App\Models\Product;
 use App\Models\Setting;
 
 class OrderController extends Controller
@@ -138,7 +139,7 @@ class OrderController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user || ($order->user_id !== $user->id && !$user->isAdmin())) {
+        if (!$user || ($order->user_id != $user->id && !$user->isAdmin())) {
             abort(403);
         }
 
@@ -160,7 +161,7 @@ class OrderController extends Controller
     public function storeRating(Request $request, Order $order)
     {
         // Pastikan order milik user yang login dan statusnya selesai
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id != auth()->id()) {
             abort(403);
         }
 
@@ -187,11 +188,33 @@ class OrderController extends Controller
     }
 
     // =========================================================================
+    // Payment Return — redirect target dari Mayar setelah user selesai bayar
+    // =========================================================================
+    public function paymentReturn(Order $order)
+    {
+        // Sync status dari Mayar API (fallback karena webhook tidak bisa akses localhost)
+        if ($order->status === 'menunggu_pembayaran') {
+            $this->checkAndSyncMayarStatus($order);
+            $order->refresh();
+        }
+
+        $message = match ($order->status) {
+            'dibayar'   => 'Pembayaran berhasil! Pesanan Anda sedang diproses. ✅',
+            'dibatalkan' => 'Pembayaran dibatalkan atau kadaluarsa.',
+            default      => 'Silakan cek kembali status pesanan Anda.',
+        };
+
+        $type = $order->status === 'dibayar' ? 'success' : 'info';
+
+        return redirect()->route('orders.show', $order)->with($type, $message);
+    }
+
+    // =========================================================================
     // Retry pembayaran — redirect ulang ke Mayar payment link
     // =========================================================================
     public function retryPayment(Order $order)
     {
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id != auth()->id()) {
             abort(403);
         }
 
@@ -417,6 +440,7 @@ class OrderController extends Controller
                         'payment_method' => $data['data']['paymentType'] ?? $data['data']['payment_method'] ?? $order->payment_method,
                         'mayar_id'       => $mayarId,
                     ]);
+                    $this->deductStock($order);
                     Log::info('[Mayar] Order diupdate ke dibayar via API check', ['order_id' => $order->id]);
                 } elseif (in_array(strtolower((string) $status), ['expired', 'failed', 'cancel', 'cancelled'])) {
                     $order->update(['status' => 'dibatalkan']);
@@ -426,6 +450,23 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             Log::error('[Mayar] checkAndSyncMayarStatus exception: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Kurangi stok produk berdasarkan item-item dalam pesanan.
+     * Dipanggil sekali saat status order berubah menjadi 'dibayar'.
+     */
+    private function deductStock(Order $order): void
+    {
+        $order->loadMissing('orderItems');
+
+        foreach ($order->orderItems as $item) {
+            Product::where('id', $item->product_id)
+                ->where('stock', '>', 0)
+                ->decrement('stock', $item->quantity);
+        }
+
+        Log::info('[Stock] Stok dikurangi setelah pembayaran', ['order_id' => $order->id]);
     }
 
     /**

@@ -13,7 +13,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div class="fade-in">
             <div class="inline-flex items-center bg-yellow-400/20 border border-yellow-400/30 rounded-full px-4 py-2 mb-6">
-                <span class="text-yellow-400 text-sm font-semibold">🐠 Ikan Marinasi Premium</span>
+                <span class="text-yellow-400 text-sm font-semibold">Ikan Marinasi Premium</span>
             </div>
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
                 Ikan <span class="gradient-text">Marinasi</span><br>
@@ -25,8 +25,7 @@
             <div class="flex flex-col sm:flex-row gap-4">
                 <a href="{{ auth()->check() ? route('cart.index') : route('register') }}#produk"
                    onclick="document.getElementById('produk').scrollIntoView({behavior:'smooth'}); return false;"
-                   class="bg-yellow-400 text-green-900 px-8 py-4 rounded-2xl font-bold text-lg btn-glow text-center hover:bg-yellow-300 transition-all">
-                    🛒 Pesan Sekarang
+                   class="bg-yellow-400 text-green-900 px-8 py-4 rounded-2xl font-bold text-lg btn-glow text-center hover:bg-yellow-300 transition-all">Pesan Sekarang
                 </a>
                 <a href="#produk" class="border-2 border-white/30 text-white px-8 py-4 rounded-2xl font-bold text-lg text-center hover:bg-white/10 transition-all">
                     Lihat Produk
@@ -92,11 +91,12 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <span class="text-3xl font-black text-green-700">{{ $product->formatted_price }}</span>
+                            <br>
                             <span class="text-gray-400 text-sm">/ porsi</span>
                         </div>
                         @auth
                             @if(!auth()->user()->isAdmin())
-                            <div class="flex flex-col gap-2 w-full">
+                            <div class="flex flex-col gap-2">
                                 {{-- Tambah ke keranjang --}}
                                 <form action="{{ route('cart.add') }}" method="POST" class="flex items-center gap-2">
                                     @csrf
@@ -106,7 +106,7 @@
                                     <button type="submit"
                                             class="flex-1 bg-green-700 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center justify-center gap-1 shadow-md hover:shadow-lg">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M12 4v16m8-8H4" />
                                         </svg>
                                         Keranjang
                                     </button>
@@ -119,19 +119,19 @@
                                     <input type="hidden" name="quantity" value="1">
                                     <input type="hidden" name="redirect_checkout" value="1">
                                     <button type="submit"
-                                            class="w-full bg-yellow-400 text-green-900 px-4 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                                        ⚡ Pesan Sekarang
+                                            class="w-full bg-yellow-400 text-green-900 px-2.5 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                        Pesan Sekarang
                                     </button>
                                 </form>
                             </div>
                             @endif
                         @else
-                        <div class="flex flex-col gap-2 w-full">
+                        <div class="flex flex-col gap-2">
                             <a href="{{ route('login') }}" class="w-full text-center bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-600 transition-all shadow-md">
-                                🛒 Login untuk Pesan
+                                Login untuk Pesan
                             </a>
                             <a href="{{ route('login') }}" class="w-full text-center bg-yellow-400 text-green-900 px-5 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md">
-                                ⚡ Pesan Sekarang
+                                Pesan Sekarang
                             </a>
                         </div>
                         @endauth
@@ -151,7 +151,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach([
-                ['icon' => '🐡', 'title' => 'Ikan Segar Pilihan', 'desc' => 'Berbagai jenis ikan Nusantara dipilih dari sumber terbaik, segar setiap hari.'],
+                ['icon' => '🐟', 'title' => 'Ikan Segar Pilihan', 'desc' => 'Berbagai jenis ikan Nusantara dipilih dari sumber terbaik, segar setiap hari.'],
                 ['icon' => '🧼', 'title' => 'Higienis & Terjamin', 'desc' => 'Diolah dengan standar kebersihan tinggi, bebas bahan pengawet kimia.'],
                 ['icon' => '🚚', 'title' => 'Pengiriman Cepat', 'desc' => 'Antar ke rumah dalam 2 jam, masih segar saat tiba di tangan Anda.'],
                 ['icon' => '💰', 'title' => 'Harga Terjangkau', 'desc' => 'Kualitas premium dengan harga yang bersahabat untuk semua kalangan.'],
@@ -207,7 +207,7 @@
         <p class="text-green-200 mb-8">Daftar sekarang dan dapatkan berbagai pilihan ikan marinasi premium langsung ke pintu rumah Anda.</p>
         <a href="{{ auth()->check() ? route('home').'#produk' : route('register') }}"
            class="bg-yellow-400 text-green-900 px-10 py-4 rounded-2xl font-black text-xl btn-glow hover:bg-yellow-300 transition-all inline-block">
-            {{ auth()->check() ? '🛒 Pesan Sekarang' : '🚀 Daftar Gratis' }}
+            {{ auth()->check() ? 'Pesan Sekarang' : 'Daftar Gratis' }}
         </a>
     </div>
 </section>
