@@ -114,8 +114,21 @@
             </div>
 
             <!-- Mobile: avatar dropdown + hamburger -->
-            <div class="md:hidden flex items-center gap-2">
-                <button id="mobile-menu-btn" class="text-white p-2">
+            <div class="md:hidden flex items-center gap-3">
+                @auth
+                    @if(!auth()->user()->isAdmin())
+                        <a href="{{ route('cart.index') }}" class="relative text-green-100 hover:text-yellow-400 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            @php $cartCount = \App\Models\Cart::where('user_id', auth()->id())->sum('quantity'); @endphp
+                            @if($cartCount > 0)
+                                <span class="badge-cart absolute -top-1 -right-2 bg-yellow-400 text-green-900 text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">{{ $cartCount }}</span>
+                            @endif
+                        </a>
+                    @endif
+                @endauth
+                <button id="mobile-menu-btn" class="text-white p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>

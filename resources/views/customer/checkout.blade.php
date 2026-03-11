@@ -4,7 +4,7 @@
 @section('content')
 <div class="py-12 min-h-screen bg-gray-50">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-black text-gray-900 mb-8">💳 Checkout</h1>
+        <h1 class="text-3xl font-black text-gray-900 mb-8">Checkout</h1>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Form -->
@@ -49,7 +49,7 @@
                                 </label>
 
                                 {{-- Map Pinpoint --}}
-                                <div class="mb-3 rounded-2xl overflow-hidden border-2 border-gray-200 relative" style="height: 260px;">
+                                <div class="mb-3 rounded-2xl overflow-hidden border-2 border-gray-200 relative z-0" style="height: 260px;">
                                     <div id="checkout-map" style="height:100%; width:100%;"></div>
                                     {{-- GPS button --}}
                                     <button type="button" id="btn-my-location"
@@ -138,7 +138,7 @@
 
                     <button type="submit"
                             class="w-full bg-green-700 text-white py-4 rounded-2xl font-black text-xl btn-glow hover:bg-green-600 transition-all shadow-lg">
-                        Bayar Sekarang via Mayar 🔒
+                        Bayar Sekarang
                     </button>
                     <p class="text-center text-gray-400 text-xs">Pembayaran diproses dengan aman melalui Mayar. Mendukung Transfer Bank, QRIS, GoPay, OVO, dan metode lainnya.</p>
                 </form>
@@ -151,16 +151,13 @@
                     <p class="text-xs text-gray-400 mb-3">Tersedia melalui platform Mayar:</p>
                     <div class="space-y-3 text-sm text-gray-600">
                         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
-                            <span>💳</span> <span>Kartu Kredit / Debit</span>
-                        </div>
-                        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
                             <span>🏦</span> <span>Transfer Bank (Virtual Account)</span>
                         </div>
                         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
                             <span>📱</span> <span>GoPay, OVO, Dana, QRIS</span>
                         </div>
                         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl">
-                            <span>🏪</span> <span>Minimarket (Indomaret/Alfamart)</span>
+                            <span>🏪</span> <span>Alfamart</span>
                         </div>
                     </div>
                     <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-700">
@@ -265,18 +262,37 @@
             var costEl     = document.getElementById('shipping-cost-display');
             var distEl     = document.getElementById('distance-display');
             var grandEl    = document.getElementById('grand-total-display');
+            var orderBtn   = document.querySelector('button[type="submit"]');
 
-            if (data.shipping_cost > 0) {
+            if (data.is_out_of_range) {
+                costEl.innerHTML    = '<span class="text-red-600 text-xs">Diluar Jangkauan Maksimal</span>';
+                distEl.textContent  = '(' + data.distance_km + ' km)';
+                grandEl.textContent = '-';
+                panel.classList.remove('hidden');
+                normalBlk.classList.add('hidden');
+                orderBtn.disabled = true;
+                orderBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                orderBtn.classList.remove('bg-green-700', 'hover:bg-green-600', 'btn-glow');
+                orderBtn.innerHTML = '🚫 Lokasi di luar jangkauan (' + data.distance_km + ' km)';
+            } else if (data.shipping_cost > 0) {
                 var grandTotal = subtotal + data.shipping_cost;
-                costEl.textContent  = 'Rp ' + data.shipping_cost.toLocaleString('id-ID');
+                costEl.innerHTML    = 'Rp ' + data.shipping_cost.toLocaleString('id-ID');
                 distEl.textContent  = '(' + data.distance_km + ' km)';
                 grandEl.textContent = 'Rp ' + grandTotal.toLocaleString('id-ID');
                 panel.classList.remove('hidden');
                 normalBlk.classList.add('hidden');
+                orderBtn.disabled = false;
+                orderBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                orderBtn.classList.add('bg-green-700', 'hover:bg-green-600', 'btn-glow');
+                orderBtn.innerHTML = 'Bayar Sekarang';
             } else {
                 // Admin location not set yet — keep normal total
                 panel.classList.add('hidden');
                 normalBlk.classList.remove('hidden');
+                orderBtn.disabled = false;
+                orderBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                orderBtn.classList.add('bg-green-700', 'hover:bg-green-600', 'btn-glow');
+                orderBtn.innerHTML = 'Bayar Sekarang';
             }
         })
         .catch(function () {});

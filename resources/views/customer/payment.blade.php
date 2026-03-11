@@ -34,7 +34,7 @@
             @if(isset($paymentLink) && $paymentLink)
             <a href="{{ $paymentLink }}" id="pay-button" target="_blank" rel="noopener"
                     class="block w-full bg-green-700 text-white py-4 rounded-2xl font-black text-xl btn-glow hover:bg-green-600 transition-all shadow-lg mb-4">
-                💳 Bayar Sekarang — {{ $order->formatted_total }}
+                Bayar Sekarang
             </a>
             <p class="text-xs text-gray-400 mb-4">Klik tombol di atas untuk membuka halaman pembayaran Mayar</p>
             @else

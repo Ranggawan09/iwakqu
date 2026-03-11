@@ -35,7 +35,7 @@
                     </p>
                     <a href="{{ $order->payment_link }}" target="_blank" rel="noopener"
                        class="w-full bg-green-700 text-white py-3 rounded-xl font-bold text-base hover:bg-green-600 transition-all shadow-md flex items-center justify-center gap-2">
-                        💳 Lanjutkan Pembayaran via Mayar &mdash; {{ $order->formatted_total }}
+                        Lanjutkan Pembayaran
                     </a>
                     <p class="text-xs text-gray-400 mt-2 text-center">Anda akan diarahkan ke halaman pembayaran Mayar</p>
                 </div>

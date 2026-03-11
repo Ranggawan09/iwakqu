@@ -162,15 +162,38 @@
                         @error('admin_address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Shipping rate --}}
+                    {{-- Shipping rules --}}
                     <div class="mb-4">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Tarif Ongkir / km</label>
-                        <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-green-500 transition-colors">
-                            <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm font-semibold border-r-2 border-gray-200 select-none">Rp</span>
-                            <input type="number" name="shipping_rate_per_km" min="0" step="500" required
-                                   value="{{ $setting['shipping_rate_per_km'] }}"
-                                   class="flex-1 px-3 py-2.5 text-sm outline-none bg-white"
-                                   placeholder="5000">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Pengaturan Ongkos Kirim</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-1">Tarif / km</label>
+                                <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-green-500 transition-colors">
+                                    <span class="px-2 py-2 bg-gray-50 text-gray-500 text-xs font-semibold border-r-2 border-gray-200 select-none">Rp</span>
+                                    <input type="number" name="shipping_rate_per_km" min="0" step="500" required
+                                           value="{{ $setting['shipping_rate_per_km'] ?? 0 }}"
+                                           class="flex-1 px-2 py-2 text-xs outline-none bg-white" placeholder="5000">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-1">Minimal (km)</label>
+                                <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-green-500 transition-colors">
+                                    <input type="number" name="min_distance_km" min="0" step="0.1"
+                                           value="{{ $setting['min_distance_km'] ?? 0 }}"
+                                           class="flex-1 px-2 py-2 text-xs outline-none bg-white w-full" placeholder="3">
+                                    <span class="px-2 py-2 bg-gray-50 text-gray-500 text-[11px] font-semibold border-l-2 border-gray-200 select-none">km</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-1">Maksimal (km)</label>
+                                <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-green-500 transition-colors">
+                                    <input type="number" name="max_distance_km" min="0" step="0.1"
+                                           value="{{ $setting['max_distance_km'] ?? 0 }}"
+                                           class="flex-1 px-2 py-2 text-xs outline-none bg-white w-full"
+                                           placeholder="0 = ∞">
+                                    <span class="px-2 py-2 bg-gray-50 text-gray-500 text-[11px] font-semibold border-l-2 border-gray-200 select-none">km</span>
+                                </div>
+                            </div>
                         </div>
                         @error('shipping_rate_per_km') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>

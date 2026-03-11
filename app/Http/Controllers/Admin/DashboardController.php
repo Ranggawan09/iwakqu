@@ -22,6 +22,8 @@ class DashboardController extends Controller
             'admin_longitude' => Setting::get('admin_longitude'),
             'admin_address' => Setting::get('admin_address'),
             'shipping_rate_per_km' => Setting::get('shipping_rate_per_km', 5000),
+            'min_distance_km' => Setting::get('min_distance_km', 0),
+            'max_distance_km' => Setting::get('max_distance_km', 0),
         ];
 
         return view('admin.dashboard', compact(

@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
+    /**
+     * Settings stored in key-value table:
+     * - admin_latitude
+     * - admin_longitude
+     * - admin_address
+     * - shipping_rate_per_km
+     * - min_distance_km
+     * - max_distance_km
+     */
     protected $primaryKey = 'key';
     public $incrementing = false;
     protected $keyType = 'string';

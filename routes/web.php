@@ -68,9 +68,11 @@ Route::middleware(['auth'])->group(function () {
         $adminLat = (float) \App\Models\Setting::get('admin_latitude',  0);
         $adminLng = (float) \App\Models\Setting::get('admin_longitude', 0);
         $rate     = (float) \App\Models\Setting::get('shipping_rate_per_km', 0);
+        $minKm    = (float) \App\Models\Setting::get('min_distance_km', 0);
+        $maxKm    = (float) \App\Models\Setting::get('max_distance_km', 0);
 
         if (!$lat || !$lng || (!$adminLat && !$adminLng)) {
-            return response()->json(['distance_km' => 0, 'shipping_cost' => 0]);
+            return response()->json(['distance_km' => 0, 'shipping_cost' => 0, 'is_out_of_range' => false]);
         }
 
         // Coba OSRM terlebih dahulu
@@ -102,9 +104,17 @@ Route::middleware(['auth'])->group(function () {
             $dist = round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)), 2);
         }
 
+        $isOutOfRange = false;
+        if ($maxKm > 0 && $dist > $maxKm) {
+            $isOutOfRange = true;
+        }
+
+        $calcDist = max($dist, $minKm);
+
         return response()->json([
-            'distance_km'   => $dist,
-            'shipping_cost' => (int) ceil($dist * $rate),
+            'distance_km'     => $dist,
+            'shipping_cost'   => (int) ceil($calcDist * $rate),
+            'is_out_of_range' => $isOutOfRange,
         ]);
     })->name('shipping.estimate');
 });

@@ -65,13 +65,21 @@ class OrderController extends Controller
         $adminLat  = (float) Setting::get('admin_latitude',  0);
         $adminLng  = (float) Setting::get('admin_longitude', 0);
         $ratePerKm = (float) Setting::get('shipping_rate_per_km', 0);
+        $minKm     = (float) Setting::get('min_distance_km', 0);
+        $maxKm     = (float) Setting::get('max_distance_km', 0);
 
         $distanceKm   = 0;
         $shippingCost = 0;
 
         if ($userLat && $userLng && ($adminLat || $adminLng) && $ratePerKm > 0) {
             $distanceKm   = $this->getOsrmDistance($adminLat, $adminLng, $userLat, $userLng);
-            $shippingCost = (int) ceil($distanceKm * $ratePerKm);
+            
+            if ($maxKm > 0 && $distanceKm > $maxKm) {
+                return back()->withInput()->with('error', 'Lokasi pengiriman diluar jangkauan maksimal (' . $maxKm . ' km).');
+            }
+
+            $calcDist = max($distanceKm, $minKm);
+            $shippingCost = (int) ceil($calcDist * $ratePerKm);
         }
 
         $total = $subtotal + $shippingCost;

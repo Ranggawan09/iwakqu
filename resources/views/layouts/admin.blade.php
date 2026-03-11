@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin') | LeleFresh Admin</title>
+    <title>@yield('title', 'Admin') | IwakQu Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -71,7 +71,7 @@
                     <span class="text-green-900 font-black text-lg">🐟</span>
                 </div>
                 <div>
-                    <span class="text-yellow-400 font-black text-lg">Lele</span><span class="text-white font-black text-lg">Fresh</span>
+                    <span class="text-yellow-400 font-black text-lg">Iwak</span><span class="text-white font-black text-lg">Qu</span>
                     <p class="text-green-400 text-xs -mt-1">Admin Panel</p>
                 </div>
             </a>

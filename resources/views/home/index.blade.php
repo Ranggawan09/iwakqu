@@ -88,45 +88,51 @@
                 <div class="p-6">
                     <h3 class="font-black text-xl text-gray-900 mb-2">{{ $product->name }}</h3>
                     <p class="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-3">{{ $product->description }}</p>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-3xl font-black text-green-700">{{ $product->formatted_price }}</span>
-                            <br>
-                            <span class="text-gray-400 text-sm">/ porsi</span>
-                        </div>
+                    <div class="flex flex-col gap-3">
                         @auth
                             @if(!auth()->user()->isAdmin())
-                            <div class="flex flex-col gap-2">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex-shrink-0">
+                                    <span class="text-xl font-black text-green-700">{{ $product->formatted_price }}</span>
+                                    <span class="text-gray-400 text-xs">/ porsi</span>
+                                </div>
+                                
                                 {{-- Tambah ke keranjang --}}
-                                <form action="{{ route('cart.add') }}" method="POST" class="flex items-center gap-2">
+                                <form action="{{ route('cart.add') }}" method="POST" class="flex items-center gap-2 flex-1 justify-end">
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $product->id }}">
                                     <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}"
                                            class="w-16 border border-gray-200 rounded-xl text-center text-sm py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                                    <button type="submit"
-                                            class="flex-1 bg-green-700 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center justify-center gap-1 shadow-md hover:shadow-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M12 4v16m8-8H4" />
+                                    <button type="submit" title="Tambah ke Keranjang"
+                                            class="bg-green-700 text-white w-[42px] h-[42px] rounded-xl font-bold hover:bg-green-600 transition-all flex items-center justify-center shadow-md hover:shadow-lg flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
-                                        Keranjang
-                                    </button>
-                                </form>
-
-                                {{-- Pesan Sekarang: tambah ke cart lalu langsung checkout --}}
-                                <form action="{{ route('cart.add') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <input type="hidden" name="redirect_checkout" value="1">
-                                    <button type="submit"
-                                            class="w-full bg-yellow-400 text-green-900 px-2.5 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                                        Pesan Sekarang
                                     </button>
                                 </form>
                             </div>
+
+                            {{-- Pesan Sekarang: tambah ke cart lalu langsung checkout --}}
+                            <form action="{{ route('cart.add') }}" method="POST" class="w-full">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                <input type="hidden" name="quantity" id="direct-buy-qty-{{ $product->id }}" value="1">
+                                <input type="hidden" name="redirect_checkout" value="1">
+                                <button type="submit"
+                                        class="w-full bg-yellow-400 text-green-900 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                    Pesan Sekarang
+                                </button>
+                            </form>
                             @endif
                         @else
-                        <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <span class="text-2xl font-black text-green-700">{{ $product->formatted_price }}</span>
+                                <br>
+                                <span class="text-gray-400 text-xs">/ porsi</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2 w-full">
                             <a href="{{ route('login') }}" class="w-full text-center bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-600 transition-all shadow-md">
                                 Login untuk Pesan
                             </a>

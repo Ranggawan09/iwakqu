@@ -18,12 +18,16 @@ class SettingController extends Controller
             'admin_longitude' => 'required|numeric|between:-180,180',
             'admin_address' => 'required|string|max:500',
             'shipping_rate_per_km' => 'required|numeric|min:0',
+            'min_distance_km' => 'nullable|numeric|min:0',
+            'max_distance_km' => 'nullable|numeric|min:0',
         ]);
 
         Setting::set('admin_latitude', $request->admin_latitude);
         Setting::set('admin_longitude', $request->admin_longitude);
         Setting::set('admin_address', $request->admin_address);
         Setting::set('shipping_rate_per_km', $request->shipping_rate_per_km);
+        Setting::set('min_distance_km', $request->min_distance_km ?: 0);
+        Setting::set('max_distance_km', $request->max_distance_km ?: 0);
 
         return back()->with('success', 'Pengaturan pengiriman berhasil disimpan.');
     }
