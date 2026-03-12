@@ -67,9 +67,7 @@
         <!-- Logo + Close button (mobile) -->
         <div class="p-5 border-b border-green-800 flex items-center justify-between">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-2">
-                <div class="w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center">
-                    <span class="text-green-900 font-black text-lg">🐟</span>
-                </div>
+                <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-10 h-10 bg-white rounded-xl p-1 object-contain">
                 <div>
                     <span class="text-yellow-400 font-black text-lg">Iwak</span><span class="text-white font-black text-lg">Qu</span>
                     <p class="text-green-400 text-xs -mt-1">Admin Panel</p>

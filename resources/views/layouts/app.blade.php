@@ -38,9 +38,7 @@
         <div class="flex items-center justify-between h-16">
             <!-- Logo -->
             <a href="{{ route('home') }}" class="flex items-center space-x-2 group">
-                <div class="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                    <span class="text-green-900 font-black text-xl">🐠</span>
-                </div>
+                <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-12 h-12 bg-white rounded-xl p-1 object-contain group-hover:scale-110 transition-transform drop-shadow-md">
                 <div>
                     <span class="text-yellow-400 font-black text-xl">Iwak</span><span class="text-white font-black text-xl">Qu</span>
                     <p class="text-green-300 text-xs -mt-1 hidden sm:block">Ikan Marinasi Premium</p>
@@ -197,9 +195,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
                 <div class="flex items-center space-x-2 mb-4">
-                    <div class="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center">
-                        <span class="text-green-900 font-black text-xl">🐠</span>
-                    </div>
+                    <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-12 h-12 bg-white rounded-xl p-1 object-contain">
                     <div>
                         <span class="text-yellow-400 font-black text-xl">Iwak</span><span class="text-white font-black text-xl">Qu</span>
                     </div>
