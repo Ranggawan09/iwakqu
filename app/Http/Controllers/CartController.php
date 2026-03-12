@@ -78,7 +78,7 @@ class CartController extends Controller
 
     public function remove(Cart $cart)
     {
-        if ($cart->user_id !== auth()->id()) {
+        if ($cart->user_id != auth()->id()) {
             abort(403);
         }
 

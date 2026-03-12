@@ -213,9 +213,9 @@
             <div>
                 <h4 class="font-bold text-yellow-400 mb-4">Hubungi Kami</h4>
                 <div class="space-y-2 text-sm text-green-300">
-                    <p>📱 WhatsApp: +62 812-3456-7890</p>
+                    <p>📱 WhatsApp: 08980625805</p>
                     <p>📧 Email: info@iwakqu.id</p>
-                    <p>📍 Jl. Ikan Segar No. 10, Jakarta</p>
+                    <p>📍 Jl. Ikan Segar No. 10, Jombang, Jawa Timur</p>
                 </div>
             </div>
         </div>
