@@ -46,6 +46,13 @@ class OrderController extends Controller
             'customer_name' => 'required|string|max:100',
             'address'       => 'required|string',
             'phone'         => 'required|string|max:20',
+            'latitude'      => 'required|numeric',
+            'longitude'     => 'required|numeric',
+        ], [
+            'latitude.required'  => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
+            'longitude.required' => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
+            'latitude.numeric'   => 'Format titik lokasi tidak valid.',
+            'longitude.numeric'  => 'Format titik lokasi tidak valid.',
         ]);
 
         $carts = Cart::with('product')
@@ -68,10 +75,19 @@ class OrderController extends Controller
         $minKm     = (float) Setting::get('min_distance_km', 0);
         $maxKm     = (float) Setting::get('max_distance_km', 0);
 
+        // Jika lokasi pengguna / toko belum di set pastikan di tolak
+        if (!$userLat || !$userLng) {
+             return back()->withInput()->with('error', 'Silakan pilih lokasi pengiriman pada peta terlebih dahulu.');
+        }
+
+        if (!$adminLat && !$adminLng) {
+            return back()->withInput()->with('error', 'Mohon maaf, lokasi toko kami belum diatur sehingga ongkos kirim belum bisa dihitung.');
+        }
+
         $distanceKm   = 0;
         $shippingCost = 0;
 
-        if ($userLat && $userLng && ($adminLat || $adminLng) && $ratePerKm > 0) {
+        if ($ratePerKm > 0) {
             $distanceKm   = $this->getOsrmDistance($adminLat, $adminLng, $userLat, $userLng);
             
             if ($maxKm > 0 && $distanceKm > $maxKm) {

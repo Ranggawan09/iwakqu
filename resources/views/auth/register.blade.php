@@ -56,7 +56,7 @@
 
                     <button type="submit"
                             class="w-full bg-green-700 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-green-600 btn-glow transition-all">
-                        Daftar Sekarang 🚀
+                        Daftar Sekarang
                     </button>
                 </form>
 

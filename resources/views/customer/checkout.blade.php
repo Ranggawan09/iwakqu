@@ -348,6 +348,38 @@
     document.getElementById('address-textarea').addEventListener('input', function () {
         this.dataset.manualEdit = '1';
     });
+
+    // Validasi form: pastikan pin lokasi sudah dipilih sebelum checkout
+    document.querySelector('form').addEventListener('submit', function (e) {
+        var lat = document.getElementById('input-lat').value;
+        var lng = document.getElementById('input-lng').value;
+        
+        if (!lat || !lng) {
+            e.preventDefault();
+            alert('Silakan pilih lokasi pengiriman (pin merah pada peta) terlebih dahulu agar pesanan dapat diproses.');
+            document.getElementById('checkout-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // Check if shipping estimate is loaded and valid (if panel is visible, cost must be valid)
+        var panel = document.getElementById('shipping-estimate-panel');
+        var orderBtn = document.querySelector('button[type="submit"]');
+
+        if (!panel.classList.contains('hidden')) {
+             if (orderBtn.disabled) {
+                e.preventDefault();
+                alert('Pesanan tidak dapat diproses karena lokasi di luar jangkauan pengiriman.');
+                return;
+             }
+        } else {
+             // Jika panel estimate hidden tapi sudah ada lat & lng, berarti masih loading api ongkir
+             if (lat && lng) {
+                 e.preventDefault();
+                 alert('Mohon tunggu sebentar, sedang menghitung ongkos kirim ke lokasi Anda.');
+                 return;
+             }
+        }
+    });
 })();
 </script>
 @endpush
