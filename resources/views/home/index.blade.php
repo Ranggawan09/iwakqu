@@ -69,43 +69,43 @@
             <p class="text-gray-500 max-w-xl mx-auto">9 pilihan ikan Nusantara dengan resep marinasi bumbu asli — diolah higienis, segar, siap masak, dan penuh cita rasa.</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6 max-w-7xl mx-auto">
             @foreach($products as $product)
-            <div class="bg-white rounded-3xl overflow-hidden shadow-md card-hover border border-gray-100">
-                <div class="relative h-64 overflow-hidden">
+            <div class="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-md card-hover border border-gray-100 flex flex-col">
+                <div class="relative h-40 sm:h-64 overflow-hidden flex-shrink-0">
                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                          onerror="this.src='https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80'; this.onerror=null;">
-                    <div class="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                    <div class="absolute top-2 left-2 sm:top-4 sm:left-4 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-3 sm:py-1.5 rounded-full">
                         Stok: {{ $product->stock }}
                     </div>
                     @if($product->stock < 9 && $product->stock > 0)
-                    <div class="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                    <div class="absolute top-2 right-2 sm:top-4 sm:right-4 bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-3 sm:py-1.5 rounded-full">
                         Hampir Habis!
                     </div>
                     @endif
                 </div>
-                <div class="p-6">
-                    <h3 class="font-black text-xl text-gray-900 mb-2">{{ $product->name }}</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-3">{{ $product->description }}</p>
-                    <div class="flex flex-col gap-3">
+                <div class="p-4 sm:p-6 flex flex-col flex-1">
+                    <h3 class="font-black text-sm sm:text-xl text-gray-900 mb-1 sm:mb-2">{{ $product->name }}</h3>
+                    <p class="text-gray-500 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-3">{{ $product->description }}</p>
+                    <div class="flex flex-col gap-2 sm:gap-3 mt-auto">
                         @auth
                             @if(!auth()->user()->isAdmin())
-                            <div class="flex items-center justify-between gap-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3">
                                 <div class="flex-shrink-0">
-                                    <span class="text-xl font-black text-green-700">{{ $product->formatted_price }}</span>
-                                    <span class="text-gray-400 text-xs">/ porsi</span>
+                                    <span class="text-sm xl:text-xl sm:text-lg font-black text-green-700">{{ $product->formatted_price }}</span>
+                                    <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
                                 </div>
                                 
                                 {{-- Tambah ke keranjang --}}
-                                <form action="{{ route('cart.add') }}" method="POST" class="flex items-center gap-2 flex-1 justify-end">
+                                <form action="{{ route('cart.add') }}" method="POST" class="flex items-center gap-1 sm:gap-2 w-full sm:w-auto mt-1 sm:mt-0 justify-between sm:justify-end">
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $product->id }}">
                                     <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}"
-                                           class="w-16 border border-gray-200 rounded-xl text-center text-sm py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                           class="w-full sm:w-16 border border-gray-200 rounded-lg sm:rounded-xl text-center text-xs sm:text-sm py-1.5 sm:py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent">
                                     <button type="submit" title="Tambah ke Keranjang"
-                                            class="bg-green-700 text-white w-[42px] h-[42px] rounded-xl font-bold hover:bg-green-600 transition-all flex items-center justify-center shadow-md hover:shadow-lg flex-shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            class="bg-green-700 text-white w-9 h-9 sm:w-[42px] sm:h-[42px] rounded-lg sm:rounded-xl font-bold hover:bg-green-600 transition-all flex items-center justify-center shadow-md hover:shadow-lg flex-shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
                                     </button>
@@ -113,31 +113,30 @@
                             </div>
 
                             {{-- Pesan Sekarang: tambah ke cart lalu langsung checkout --}}
-                            <form action="{{ route('cart.add') }}" method="POST" class="w-full">
+                            <form action="{{ route('cart.add') }}" method="POST" class="w-full mt-1 sm:mt-0">
                                 @csrf
                                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                                 <input type="hidden" name="quantity" id="direct-buy-qty-{{ $product->id }}" value="1">
                                 <input type="hidden" name="redirect_checkout" value="1">
                                 <button type="submit"
-                                        class="w-full bg-yellow-400 text-green-900 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                        class="w-full bg-yellow-400 text-green-900 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base">
                                     Pesan Sekarang
                                 </button>
                             </form>
                             @endif
                         @else
-                        <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center justify-between mb-1 sm:mb-3">
                             <div>
-                                <span class="text-2xl font-black text-green-700">{{ $product->formatted_price }}</span>
-                                <br>
-                                <span class="text-gray-400 text-xs">/ porsi</span>
+                                <span class="text-sm sm:text-2xl font-black text-green-700">{{ $product->formatted_price }}</span>
+                                <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
                             </div>
                         </div>
-                        <div class="flex flex-col gap-2 w-full">
-                            <a href="{{ route('login') }}" class="w-full text-center bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-600 transition-all shadow-md">
-                                Login untuk Pesan
+                        <div class="flex flex-col gap-1.5 sm:gap-2 w-full">
+                            <a href="{{ route('login') }}" class="w-full text-center bg-green-700 text-white px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-semibold hover:bg-green-600 transition-all shadow-md text-xs sm:text-base">
+                                Login
                             </a>
-                            <a href="{{ route('login') }}" class="w-full text-center bg-yellow-400 text-green-900 px-5 py-2.5 rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md">
-                                Pesan Sekarang
+                            <a href="{{ route('login') }}" class="w-full text-center bg-yellow-400 text-green-900 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-black hover:bg-yellow-300 transition-all shadow-md text-xs sm:text-base">
+                                Pesan
                             </a>
                         </div>
                         @endauth

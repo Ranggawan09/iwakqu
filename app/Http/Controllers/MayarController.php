@@ -29,6 +29,13 @@ class MayarController extends Controller
         $referenceId = $payload['referenceId'] ?? null; // order ID kita (format: IWAKQU-{id}-{time})
         $trxId = $payload['id'] ?? null; // ID transaksi Mayar
         $paymentType = $payload['paymentType'] ?? null; // 'bank_transfer', 'qris', dll
+        $event = $payload['event'] ?? null;
+
+        // Bypass untuk fitur "Test URL" dari Dashboard Mayar
+        if ($event === 'testing') {
+            Log::info('[Mayar Webhook] Testing URL Success');
+            return response()->json(['message' => 'Webhook URL is valid']);
+        }
 
         if (!$referenceId) {
             return response()->json(['message' => 'referenceId missing'], 400);

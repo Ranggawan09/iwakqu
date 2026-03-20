@@ -25,30 +25,36 @@
             <!-- Cart Items -->
             <div class="lg:col-span-2 space-y-4">
                 @foreach($carts as $cart)
-                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center gap-4">
-                    <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}"
-                         class="w-20 h-20 object-cover rounded-xl flex-shrink-0"
-                         onerror="this.src='https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80'; this.onerror=null;">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-bold text-gray-900 truncate">{{ $cart->product->name }}</h3>
-                        <p class="text-green-700 font-semibold">{{ $cart->product->formatted_price }}</p>
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 relative">
+                    <div class="flex items-center gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
+                        <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}"
+                             class="w-20 h-20 object-cover rounded-xl flex-shrink-0"
+                             onerror="this.src='https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80'; this.onerror=null;">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-gray-900 truncate pr-8 sm:pr-0">{{ $cart->product->name }}</h3>
+                            <p class="text-green-700 font-semibold">{{ $cart->product->formatted_price }}</p>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <form action="{{ route('cart.update', $cart) }}" method="POST" class="flex items-center gap-1">
-                            @csrf @method('PUT')
-                            <button type="button" onclick="changeQty(this, -1)" class="w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 transition-colors">-</button>
-                            <input type="number" name="quantity" value="{{ $cart->quantity }}" min="1" max="{{ $cart->product->stock }}"
-                                   class="w-14 text-center border border-gray-200 rounded-lg py-1 text-sm font-bold focus:ring-2 focus:ring-green-500"
-                                   onchange="this.form.submit()">
-                            <button type="button" onclick="changeQty(this, 1)" class="w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 transition-colors">+</button>
-                        </form>
+                    
+                    <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 px-1 sm:px-0">
+                        <div class="flex items-center">
+                            <form action="{{ route('cart.update', $cart) }}" method="POST" class="flex items-center gap-1">
+                                @csrf @method('PUT')
+                                <button type="button" onclick="changeQty(this, -1)" class="w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 transition-colors">-</button>
+                                <input type="number" name="quantity" value="{{ $cart->quantity }}" min="1" max="{{ $cart->product->stock }}"
+                                       class="w-14 text-center border border-gray-200 rounded-lg py-1 text-sm font-bold focus:ring-2 focus:ring-green-500"
+                                       onchange="this.form.submit()">
+                                <button type="button" onclick="changeQty(this, 1)" class="w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 transition-colors">+</button>
+                            </form>
+                        </div>
+                        <div class="text-right min-w-0 sm:ml-4">
+                            <p class="font-black text-gray-900 text-base">{{ $cart->formatted_subtotal }}</p>
+                        </div>
                     </div>
-                    <div class="text-right min-w-0">
-                        <p class="font-black text-gray-900 text-sm">{{ $cart->formatted_subtotal }}</p>
-                    </div>
-                    <form action="{{ route('cart.remove', $cart) }}" method="POST">
+
+                    <form action="{{ route('cart.remove', $cart) }}" method="POST" class="absolute top-4 right-4 sm:static sm:top-auto sm:right-auto">
                         @csrf @method('DELETE')
-                        <button type="submit" class="text-red-400 hover:text-red-600 transition-colors p-1" title="Hapus">
+                        <button type="submit" class="text-red-400 hover:text-red-500 transition-colors p-1" title="Hapus">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
