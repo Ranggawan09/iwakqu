@@ -6,11 +6,10 @@
     <div class="w-full max-w-md">
         <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
             <div class="bg-green-700 px-8 py-8 text-center">
-                <div class="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                    <span class="text-4xl">🐟</span>
-                </div>
+                <a class="flex justify-center items-center mb-4">
+                    <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-20 h-20 bg-white rounded-xl flex justify-center items-center">
+                </a>
                 <h1 class="text-white font-black text-2xl">Buat Akun Baru</h1>
-                <p class="text-green-200 text-sm mt-1">Bergabung dengan komunitas LeleFresh</p>
             </div>
 
             <div class="px-8 py-8">

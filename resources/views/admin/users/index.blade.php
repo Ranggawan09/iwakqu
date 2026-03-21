@@ -3,7 +3,61 @@
 @section('page-title', 'Kelola Pengguna')
 
 @section('content')
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+<div class="mb-4">
+    <p class="text-gray-400 text-sm">{{ $users->total() }} pengguna terdaftar</p>
+</div>
+
+{{-- ============================================================ --}}
+{{-- MOBILE: Card layout (shown only on small screens) --}}
+{{-- ============================================================ --}}
+<div class="md:hidden space-y-3">
+    @forelse($users as $user)
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+        {{-- Avatar --}}
+        <div class="w-11 h-11 {{ $user->isAdmin() ? 'bg-yellow-400' : 'bg-green-600' }} rounded-full flex items-center justify-center flex-shrink-0">
+            <span class="{{ $user->isAdmin() ? 'text-green-900' : 'text-white' }} font-bold text-sm">
+                {{ strtoupper(substr($user->name, 0, 1)) }}
+            </span>
+        </div>
+
+        {{-- Info --}}
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+                <p class="font-semibold text-gray-900 text-sm">{{ $user->name }}</p>
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $user->isAdmin() ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700' }}">
+                    {{ $user->isAdmin() ? 'Admin' : 'User' }}
+                </span>
+            </div>
+            <p class="text-gray-400 text-xs break-all">{{ $user->email }}</p>
+            <p class="text-gray-400 text-xs mt-0.5">Bergabung {{ $user->created_at->format('d M Y') }}</p>
+        </div>
+
+        {{-- Action --}}
+        @if(!$user->isAdmin())
+        <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
+              onsubmit="return confirm('Hapus user {{ $user->name }}?')" class="flex-shrink-0">
+            @csrf @method('DELETE')
+            <button type="submit" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors">
+                Hapus
+            </button>
+        </form>
+        @endif
+    </div>
+    @empty
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-gray-400">
+        Tidak ada pengguna
+    </div>
+    @endforelse
+
+    @if($users->hasPages())
+    <div class="pt-2">{{ $users->links() }}</div>
+    @endif
+</div>
+
+{{-- ============================================================ --}}
+{{-- DESKTOP: Table layout (hidden on mobile) --}}
+{{-- ============================================================ --}}
+<div class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="p-5 border-b border-gray-100">
         <p class="text-gray-400 text-sm">{{ $users->total() }} pengguna terdaftar</p>
     </div>
@@ -59,3 +113,4 @@
     @endif
 </div>
 @endsection
+

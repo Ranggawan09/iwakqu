@@ -34,6 +34,8 @@
                             </label>
                             <input type="text" name="phone"
                                    value="{{ old('phone', $lastOrder?->phone) }}" required
+                                   pattern="[0-9]+" minlength="10" maxlength="20" inputmode="numeric"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-green-500 outline-none transition-colors @error('phone') border-red-400 @enderror"
                                    placeholder="Contoh: 081234567890">
                             @error('phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

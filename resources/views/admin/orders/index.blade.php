@@ -7,13 +7,103 @@
 <div class="mb-5 flex flex-wrap gap-2">
     @foreach([''=> 'Semua', 'menunggu_pembayaran'=> 'Menunggu', 'dibayar'=> 'Dibayar', 'diproses'=> 'Diproses', 'dikirim'=> 'Dikirim', 'selesai'=> 'Selesai', 'dibatalkan'=> 'Dibatalkan'] as $val => $label)
     <a href="{{ route('admin.orders.index', $val ? ['status' => $val] : []) }}"
-       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request('status') === $val || (!request('status') && $val === '') ? 'bg-green-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' }}">
+       class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request('status') === $val || (!request('status') && $val === '') ? 'bg-green-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' }}">
         {{ $label }}
     </a>
     @endforeach
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+{{-- ============================================================ --}}
+{{-- MOBILE: Card layout (shown only on small screens) --}}
+{{-- ============================================================ --}}
+<div class="md:hidden space-y-3">
+    @forelse($orders as $order)
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+
+        {{-- Header: ID + Status badge --}}
+        <div class="flex items-center justify-between mb-3">
+            <span class="font-black text-green-700 text-sm">#{{ $order->id }}</span>
+            <span class="text-xs text-gray-400">{{ $order->created_at->format('d M Y') }}</span>
+        </div>
+
+        {{-- Customer --}}
+        <div class="mb-2">
+            <p class="font-semibold text-gray-900 text-sm">{{ $order->customer_name }}</p>
+            <p class="text-gray-400 text-xs">{{ $order->user->email }}</p>
+        </div>
+
+        {{-- Items ordered --}}
+        <div class="mb-2 text-xs text-gray-600 space-y-0.5">
+            @foreach($order->orderItems as $item)
+                <p>{{ $item->product->name ?? $item->product_name }} <span class="text-gray-400">×{{ $item->quantity }}</span></p>
+            @endforeach
+        </div>
+
+        {{-- Total --}}
+        <p class="font-bold text-gray-900 text-sm mb-3">{{ $order->formatted_total }}</p>
+
+        {{-- Status dropdown --}}
+        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="mb-3">
+            @csrf @method('PUT')
+            <select name="status" onchange="this.form.submit()"
+                    class="w-full text-xs font-semibold rounded-xl px-3 py-2 border outline-none cursor-pointer transition-colors
+                        @if($order->status === 'selesai') bg-green-50 border-green-200 text-green-700
+                        @elseif($order->status === 'dibayar') bg-blue-50 border-blue-200 text-blue-700
+                        @elseif($order->status === 'diproses') bg-indigo-50 border-indigo-200 text-indigo-700
+                        @elseif($order->status === 'dikirim') bg-orange-50 border-orange-200 text-orange-700
+                        @elseif($order->status === 'dibatalkan') bg-red-50 border-red-200 text-red-700
+                        @else bg-yellow-50 border-yellow-200 text-yellow-700 @endif">
+                @foreach([
+                    'menunggu_pembayaran' => 'Menunggu',
+                    'dibayar'             => 'Dibayar',
+                    'diproses'            => 'Diproses',
+                    'dikirim'             => 'Dikirim',
+                    'selesai'             => 'Selesai',
+                    'dibatalkan'          => 'Dibatalkan',
+                ] as $val => $lbl)
+                <option value="{{ $val }}" {{ $order->status === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                @endforeach
+            </select>
+        </form>
+
+        {{-- Actions row --}}
+        <div class="flex items-center gap-2">
+            {{-- Location buttons --}}
+            @if($order->latitude && $order->longitude)
+                <a href="https://www.google.com/maps?q={{ $order->latitude }},{{ $order->longitude }}"
+                   target="_blank" rel="noopener"
+                   class="flex-1 text-center text-xs font-semibold py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                    📍 Peta
+                </a>
+                <a href="https://www.google.com/maps/dir/?api=1&destination={{ $order->latitude }},{{ $order->longitude }}&travelmode=driving"
+                   target="_blank" rel="noopener"
+                   class="flex-1 text-center text-xs font-semibold py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
+                    🗺 Rute
+                </a>
+            @else
+                <span class="flex-1 text-center text-xs text-gray-300 italic py-1.5">Tidak ada lokasi</span>
+            @endif
+            <a href="{{ route('admin.orders.show', $order) }}"
+               class="flex-1 text-center text-xs font-semibold py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                Detail
+            </a>
+        </div>
+    </div>
+    @empty
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-gray-400">
+        Tidak ada pesanan
+    </div>
+    @endforelse
+
+    @if($orders->hasPages())
+    <div class="pt-2">{{ $orders->links() }}</div>
+    @endif
+</div>
+
+{{-- ============================================================ --}}
+{{-- DESKTOP: Table layout (hidden on mobile) --}}
+{{-- ============================================================ --}}
+<div class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
     <table class="w-full min-w-[800px]">
         <thead class="bg-gray-50">
             <tr>
@@ -82,20 +172,16 @@
                 {{-- Lokasi / Google Maps --}}
                 <td class="px-5 py-4">
                     @if($order->latitude && $order->longitude)
-                        {{-- Link buka di Google Maps dengan pin lokasi --}}
                         <a href="https://www.google.com/maps?q={{ $order->latitude }},{{ $order->longitude }}"
                            target="_blank" rel="noopener"
-                           title="Buka di Google Maps"
                            class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
                             </svg>
                             Lihat Peta
                         </a>
-                        {{-- Link rute dari lokasi admin ke lokasi pemesan --}}
                         <a href="https://www.google.com/maps/dir/?api=1&destination={{ $order->latitude }},{{ $order->longitude }}&travelmode=driving"
                            target="_blank" rel="noopener"
-                           title="Lihat rute pengiriman"
                            class="mt-1 inline-flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />

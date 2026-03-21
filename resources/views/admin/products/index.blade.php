@@ -6,7 +6,7 @@
 <div class="mb-5 flex items-center justify-between">
     <p class="text-gray-400 text-sm">{{ $products->total() }} produk terdaftar</p>
     <a href="{{ route('admin.products.create') }}"
-       class="bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center gap-2">
+       class="bg-green-700 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center gap-2 text-sm">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -14,7 +14,67 @@
     </a>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+{{-- ============================================================ --}}
+{{-- MOBILE: Card layout (shown only on small screens) --}}
+{{-- ============================================================ --}}
+<div class="md:hidden space-y-3">
+    @forelse($products as $product)
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-3">
+        {{-- Product image --}}
+        <img src="{{ $product->image_url }}" class="w-16 h-16 object-cover rounded-xl flex-shrink-0"
+             onerror="this.src='https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100&q=80'; this.onerror=null;">
+
+        {{-- Product info --}}
+        <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+                <p class="font-semibold text-gray-900 text-sm leading-tight">{{ $product->name }}</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0
+                    {{ $product->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
+                    {{ $product->is_active ? 'Aktif' : 'Nonaktif' }}
+                </span>
+            </div>
+
+            <p class="text-gray-400 text-xs mt-0.5 line-clamp-1">{{ Str::limit($product->description, 50) }}</p>
+
+            <div class="flex items-center gap-3 mt-2">
+                <span class="font-bold text-green-700 text-sm">{{ $product->formatted_price }}</span>
+                <span class="text-xs {{ $product->stock < 10 ? 'text-orange-600 font-semibold' : 'text-gray-400' }}">
+                    Stok: {{ $product->stock }}
+                </span>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex items-center gap-2 mt-3">
+                <a href="{{ route('admin.products.edit', $product) }}"
+                   class="flex-1 text-center bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors">
+                    Edit
+                </a>
+                <form action="{{ route('admin.products.destroy', $product) }}" method="POST"
+                      onsubmit="return confirm('Hapus produk ini?')" class="flex-1">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                        class="w-full bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors">
+                        Hapus
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    @empty
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-gray-400">
+        Belum ada produk
+    </div>
+    @endforelse
+
+    @if($products->hasPages())
+    <div class="pt-2">{{ $products->links() }}</div>
+    @endif
+</div>
+
+{{-- ============================================================ --}}
+{{-- DESKTOP: Table layout (hidden on mobile) --}}
+{{-- ============================================================ --}}
+<div class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <table class="w-full">
         <thead class="bg-gray-50">
             <tr>

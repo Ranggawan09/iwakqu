@@ -45,10 +45,12 @@ class OrderController extends Controller
         $request->validate([
             'customer_name' => 'required|string|max:100',
             'address'       => 'required|string',
-            'phone'         => 'required|string|max:20',
+            'phone'         => 'required|regex:/^[0-9]+$/|min:10|max:20',
             'latitude'      => 'required|numeric',
             'longitude'     => 'required|numeric',
         ], [
+            'phone.regex'        => 'No. HP / WhatsApp hanya boleh berisi angka.',
+            'phone.min'          => 'No. HP / WhatsApp minimal 10 karakter.',
             'latitude.required'  => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
             'longitude.required' => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
             'latitude.numeric'   => 'Format titik lokasi tidak valid.',
