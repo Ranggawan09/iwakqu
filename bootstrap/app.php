@@ -15,8 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // agar Laravel tahu request datang via HTTPS dan generate URL yang benar.
         $middleware->trustProxies(at: '*');
 
+        // Jalankan pengecekan maintenance di semua request web
+        $middleware->web(append: [
+            \App\Http\Middleware\MaintenanceModeMiddleware::class,
+        ]);
+
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin'       => \App\Http\Middleware\AdminMiddleware::class,
+            'maintenance' => \App\Http\Middleware\MaintenanceModeMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
