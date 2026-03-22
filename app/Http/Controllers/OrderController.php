@@ -468,9 +468,18 @@ class OrderController extends Controller
                         'mayar_id'       => $mayarId,
                     ]);
                     $this->deductStock($order);
+                    
+                    $admins = \App\Models\User::where('role', 'admin')->get();
+                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\OrderPaidNotification($order));
+                    
                     Log::info('[Mayar] Order diupdate ke dibayar via API check', ['order_id' => $order->id]);
                 } elseif (in_array(strtolower((string) $status), ['expired', 'failed', 'cancel', 'cancelled'])) {
                     $order->update(['status' => 'dibatalkan']);
+                    
+                    if ($order->user) {
+                        $order->user->notify(new \App\Notifications\OrderStatusUpdatedNotification($order, 'dibatalkan'));
+                    }
+                    
                     Log::info('[Mayar] Order diupdate ke dibatalkan via API check', ['order_id' => $order->id]);
                 }
             }

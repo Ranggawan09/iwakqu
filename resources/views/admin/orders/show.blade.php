@@ -1,6 +1,6 @@
 @extends('layouts.admin')
-@section('title', 'Detail Pesanan #{{ $order->id }}')
-@section('page-title', 'Detail Pesanan #{{ $order->id }}')
+@section('title', 'Detail Pesanan #' . $order->id)
+@section('page-title', 'Detail Pesanan #' . $order->id)
 
 @section('content')
 <div class="max-w-3xl space-y-5">

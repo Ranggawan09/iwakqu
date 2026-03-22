@@ -151,6 +151,34 @@
                 <h1 class="text-lg lg:text-xl font-bold text-gray-800">@yield('page-title', 'Dashboard')</h1>
             </div>
             <div class="flex items-center gap-2 sm:gap-3">
+                {{-- Admin Notifications --}}
+                <div class="relative">
+                    <button type="button" onclick="document.getElementById('admin-notif-dropdown').classList.toggle('hidden')" class="relative text-gray-400 hover:text-yellow-500 transition-colors mr-2 outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
+                        @if($unreadCount > 0)
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center">{{ $unreadCount }}</span>
+                        @endif
+                    </button>
+                    <div id="admin-notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                        <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <p class="font-bold text-gray-800 text-sm">Notifikasi</p>
+                        </div>
+                        <div class="max-h-72 overflow-y-auto w-full">
+                            @forelse(auth()->user()->unreadNotifications as $notification)
+                                <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-green-50 border-b border-gray-50 transition-colors">
+                                    <p class="text-xs text-gray-800 font-medium whitespace-normal">{{ $notification->data['message'] ?? 'Notifikasi baru.' }}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                </a>
+                            @empty
+                                <div class="px-4 py-6 text-center text-sm text-gray-400">Belum ada notifikasi</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
                 <span class="text-sm text-gray-400 hidden sm:block">{{ now()->format('d F Y') }}</span>
                 <a href="{{ route('home') }}"
                    class="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">

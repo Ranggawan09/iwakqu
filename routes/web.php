@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
@@ -43,6 +43,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile',          [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile/info',     [ProfileController::class, 'updateInfo'])->name('profile.update-info');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+
+    // Notifications
+    Route::get('/notifications/{id}/read', function ($id) {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
+        return redirect($notification->data['url'] ?? url('/'));
+    })->name('notifications.read');
 
     // Cart
     Route::get('/cart',           [CartController::class, 'index'])->name('cart.index');

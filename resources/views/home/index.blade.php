@@ -225,4 +225,112 @@
         <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
     </svg>
 </a>
+
+<!-- PWA Install Popup Modal -->
+<div id="pwa-install-popup" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative text-center scale-95 opacity-0 transition-all duration-300" id="pwa-popup-content">
+        <!-- Close button -->
+        <button onclick="closePwaPopup()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+
+        <!-- Logo -->
+        <div class="flex justify-center mb-4">
+            <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-16 h-16 bg-white rounded-2xl p-1 shadow-sm object-contain border border-gray-100">
+        </div>
+
+        <h3 class="text-xl font-black text-gray-900 mb-2">Install IwakQu</h3>
+        <p class="text-sm text-gray-500 mb-6 leading-relaxed">
+            Akses lebih cepat, hemat kuota, dan fitur full screen tanpa perlu download di Store.
+        </p>
+
+        <!-- Install Button -->
+        <button id="pwa-install-btn" class="w-full bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-600 transition-all mb-4">
+            Install Sekarang
+        </button>
+
+        <!-- Checkbox Jangan Tampilkan Lagi -->
+        <div class="flex items-center justify-start text-left mt-2">
+            <input type="checkbox" id="dont-show-again" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded outline-none cursor-pointer">
+            <label for="dont-show-again" class="ml-2 text-xs text-gray-500 cursor-pointer">jangan tampilkan lagi</label>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    let deferredPrompt;
+    const pwaPopup = document.getElementById('pwa-install-popup');
+    const pwaContent = document.getElementById('pwa-popup-content');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const dontShowCb = document.getElementById('dont-show-again');
+
+    const hidePopup = localStorage.getItem('hideInstallPopup');
+    const tempHide = sessionStorage.getItem('tempHideInstall');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67+ from automatically showing the prompt
+        e.preventDefault();
+        deferredPrompt = e;
+
+        // Tampilkan modal jika pengguna belum pernah mencentang "jangan tampilkan lagi"
+        // dan belum menutupnya di sesi ini
+        if (hidePopup !== 'true' && tempHide !== 'true') {
+            showPwaPopup();
+        }
+    });
+
+    function showPwaPopup() {
+        pwaPopup.classList.remove('hidden');
+        pwaPopup.classList.add('flex');
+        
+        requestAnimationFrame(() => {
+            pwaContent.classList.remove('scale-95', 'opacity-0');
+            pwaContent.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    function closePwaPopup() {
+        if (dontShowCb.checked) {
+            localStorage.setItem('hideInstallPopup', 'true');
+        } else {
+            sessionStorage.setItem('tempHideInstall', 'true');
+        }
+        
+        pwaContent.classList.remove('scale-100', 'opacity-100');
+        pwaContent.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            pwaPopup.classList.add('hidden');
+            pwaPopup.classList.remove('flex');
+        }, 300);
+    }
+
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                localStorage.setItem('hideInstallPopup', 'true');
+            }
+            deferredPrompt = null;
+            closePwaPopup();
+        } else {
+            // Untuk browser yang tidak mendeteksi beforeinstallprompt (misal iOS Safari Safari)
+            // Sebaiknya ditangani secara independen, namun kita sertakan alert untuk amannya
+            alert("Untuk menginstall, buka opsi browser (titik tiga atau icon Share) lalu pilih 'Add to Home screen' atau 'Install app'.");
+            closePwaPopup();
+        }
+    });
+
+    // Close modal ketika mengklik background di luar konten
+    pwaPopup.addEventListener('click', (e) => {
+        if (e.target === pwaPopup) {
+            closePwaPopup();
+        }
+    });
+</script>
+@endpush
 @endsection

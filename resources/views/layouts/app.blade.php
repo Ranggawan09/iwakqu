@@ -67,6 +67,34 @@
                         <a href="{{ route('orders.index') }}" class="text-green-100 hover:text-yellow-400 font-medium transition-colors">Pesanan</a>
                     @endif
 
+                    {{-- Notifications Desktop --}}
+                    <div class="relative group">
+                        <a href="#" class="relative text-green-100 hover:text-yellow-400 font-medium transition-colors mr-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
+                            @if($unreadCount > 0)
+                                <span class="badge-cart absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">{{ $unreadCount }}</span>
+                            @endif
+                        </a>
+                        <div class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-gray-100 overflow-hidden z-50">
+                            <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <p class="font-bold text-gray-800 text-sm">Notifikasi</p>
+                            </div>
+                            <div class="max-h-72 overflow-y-auto">
+                                @forelse(auth()->user()->unreadNotifications as $notification)
+                                    <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-green-50 border-b border-gray-50 transition-colors">
+                                        <p class="text-xs text-gray-800 font-medium">{{ $notification->data['message'] ?? 'Ada pembaruan pesanan.' }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </a>
+                                @empty
+                                    <div class="px-4 py-6 text-center text-sm text-gray-400">Belum ada notifikasi</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="relative group">
                         <a href="{{ route('profile.show') }}" class="flex items-center space-x-2 text-green-100 hover:text-yellow-400 font-medium transition-colors">
                             <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -132,6 +160,31 @@
                     </svg>
                 </button>
                 @auth
+                <div class="relative">
+                    <button type="button" onclick="document.getElementById('mobile-notif-dropdown').classList.toggle('hidden')" class="relative text-green-100 hover:text-yellow-400 transition-colors mr-1 outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full h-3.5 w-3.5 flex items-center justify-center">{{ auth()->user()->unreadNotifications->count() }}</span>
+                        @endif
+                    </button>
+                    <div id="mobile-notif-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                        <div class="px-4 py-2 border-b border-gray-100 bg-gray-50">
+                            <p class="font-bold text-gray-800 text-xs">Notifikasi</p>
+                        </div>
+                        <div class="max-h-60 overflow-y-auto">
+                            @forelse(auth()->user()->unreadNotifications as $notification)
+                                <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-2 hover:bg-green-50 border-b border-gray-50">
+                                    <p class="text-[11px] text-gray-800 font-medium">{{ $notification->data['message'] ?? 'Ada pembaruan pesanan.' }}</p>
+                                    <p class="text-[9px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                </a>
+                            @empty
+                                <div class="px-4 py-4 text-center text-xs text-gray-400">Kosong</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
                 <a href="{{ route('profile.show') }}" class="flex items-center gap-1.5 text-green-100 hover:text-yellow-400 transition-colors">
                     <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
                         <span class="text-green-900 font-bold text-sm">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
