@@ -44,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile/info',     [ProfileController::class, 'updateInfo'])->name('profile.update-info');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 
+    // Web Push
+    Route::post('/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+
     // Notifications
     Route::get('/notifications/{id}/read', function ($id) {
         $notification = auth()->user()->notifications()->findOrFail($id);

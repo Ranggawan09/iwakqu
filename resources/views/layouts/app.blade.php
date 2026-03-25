@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'IwakQu — Ikan Marinasi Premium') | IwakQu</title>
     <meta name="description" content="@yield('description', 'IwakQu - Penjualan Ikan Marinasi Premium pilihan Nusantara. Gurame, Nila, Kakap, Patin, dan banyak lagi. Segar, lezat, dan siap antar ke rumah Anda.')">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#15803D">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,6 +295,76 @@
             if (el) { el.style.transition = 'opacity 0.5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }
         });
     }, 4000);
+
+    @auth
+    // Web Push Subscription Logic
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        navigator.serviceWorker.register('/sw.js').then(function(swReg) {
+            console.log('Service Worker is registered', swReg);
+            
+            // Ask for permission and subscribe if not already
+            const vapidPublicKey = "{{ config('webpush.vapid.public_key') }}";
+            
+            if (vapidPublicKey && Notification.permission !== 'denied') {
+                Notification.requestPermission().then(function(permission) {
+                    if (permission === 'granted') {
+                        subscribeUser(swReg, vapidPublicKey);
+                    }
+                });
+            }
+        });
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    function subscribeUser(swReg, vapidPublicKey) {
+        const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+        swReg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+        })
+        .then(function(subscription) {
+            console.log('User is subscribed:', subscription);
+            sendSubscriptionToBackEnd(subscription);
+        })
+        .catch(function(err) {
+            console.log('Failed to subscribe the user: ', err);
+        });
+    }
+
+    function sendSubscriptionToBackEnd(subscription) {
+        fetch('{{ route('push-subscriptions.store') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(subscription)
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Bad status code from server.');
+            }
+            return response.json();
+        })
+        .then(function(responseData) {
+            console.log('Subscription saved on backend.');
+        });
+    }
+    @endauth
 </script>
 @stack('scripts')
 </body>

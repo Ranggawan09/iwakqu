@@ -228,33 +228,42 @@
 
 <!-- PWA Install Popup Modal -->
 <div id="pwa-install-popup" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-    <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative text-center scale-95 opacity-0 transition-all duration-300" id="pwa-popup-content">
+    <div class="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl relative scale-95 opacity-0 transition-all duration-300" id="pwa-popup-content">
         <!-- Close button -->
         <button onclick="closePwaPopup()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
 
-        <!-- Logo -->
-        <div class="flex justify-center mb-4">
-            <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-16 h-16 bg-white rounded-2xl p-1 shadow-sm object-contain border border-gray-100">
+        <div class="flex items-start gap-4 mb-5 mt-1">
+            <!-- Logo -->
+            <div class="flex-shrink-0">
+                <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center border border-green-100 shadow-sm">
+                    <img src="{{ asset('images/logo.png') }}" alt="IwakQu Logo" class="w-10 h-10 object-contain">
+                </div>
+            </div>
+            <!-- Text Content -->
+            <div class="pr-6 pt-0.5">
+                <h3 class="text-lg font-black text-gray-900 mb-1 leading-tight">Install IwakQu</h3>
+                <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                    Akses lebih cepat, hemat kuota, dan fitur full screen tanpa perlu download di Store.
+                </p>
+            </div>
         </div>
 
-        <h3 class="text-xl font-black text-gray-900 mb-2">Install IwakQu</h3>
-        <p class="text-sm text-gray-500 mb-6 leading-relaxed">
-            Akses lebih cepat, hemat kuota, dan fitur full screen tanpa perlu download di Store.
-        </p>
-
         <!-- Install Button -->
-        <button id="pwa-install-btn" class="w-full bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-600 transition-all mb-4">
+        <button id="pwa-install-btn" class="w-full bg-green-700 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
             Install Sekarang
         </button>
 
         <!-- Checkbox Jangan Tampilkan Lagi -->
-        <div class="flex items-center justify-start text-left mt-2">
-            <input type="checkbox" id="dont-show-again" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded outline-none cursor-pointer">
-            <label for="dont-show-again" class="ml-2 text-xs text-gray-500 cursor-pointer">jangan tampilkan lagi</label>
+        <div class="flex items-center text-left">
+            <input type="checkbox" id="dont-show-again" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded outline-none cursor-pointer focus:ring-green-500">
+            <label for="dont-show-again" class="ml-2 text-xs text-gray-400 cursor-pointer">jangan tampilkan lagi</label>
         </div>
     </div>
 </div>
