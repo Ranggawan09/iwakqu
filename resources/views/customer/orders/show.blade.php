@@ -116,11 +116,44 @@
             <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
                 <h3 class="font-bold text-gray-900 mb-3">💳 Informasi Pembayaran</h3>
                 <div class="text-sm space-y-2">
-                    @if($order->transaction_id)
-                    <div class="flex justify-between"><span class="text-gray-400">ID Transaksi</span><span class="font-mono font-semibold">{{ $order->transaction_id }}</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Metode</span><span class="font-semibold">{{ $order->payment_method ?? '-' }}</span></div>
-                    @else
-                    <p class="text-yellow-600 font-medium">Menunggu pembayaran...</p>
+                    @php
+                        $displayMayarId = $order->mayar_id;
+                        // Jika ID masih berupa UUID panjang, coba ambil yang pendek dari link (untuk pesanan lama)
+                        if (strlen($displayMayarId ?? '') > 20 && $order->payment_link) {
+                            if (preg_match('/\/(invoices|pay|p)\/([a-z0-9A-Z]+)/i', $order->payment_link, $m)) {
+                                $displayMayarId = $m[2];
+                            }
+                        }
+                    @endphp
+                    
+                    @if($displayMayarId)
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">ID Transaksi</span>
+                        <span class="font-mono font-semibold text-gray-700">{{ $displayMayarId }}</span>
+                    </div>
+                    @endif
+
+                    <!-- @if($order->transaction_id)
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">ID Transaksi</span>
+                        <span class="font-mono font-semibold">{{ $order->transaction_id }}</span>
+                    </div>
+                    @endif
+
+                    @if($order->payment_method)
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Metode Pembayaran</span>
+                        <span class="font-semibold">{{ $order->payment_method }}</span>
+                    </div>
+                    @endif -->
+
+                    @if($order->status === 'menunggu_pembayaran')
+                    <div class="pt-2">
+                        <p class="text-yellow-600 font-medium flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Menunggu pembayaran...
+                        </p>
+                    </div>
                     @endif
                 </div>
             </div>

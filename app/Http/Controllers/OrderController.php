@@ -34,7 +34,10 @@ class OrderController extends Controller
             ->latest()
             ->first();
 
-        return view('customer.checkout', compact('carts', 'total', 'lastOrder'));
+        // Check operational hours
+        $op = $this->checkOperationalHours();
+
+        return view('customer.checkout', compact('carts', 'total', 'lastOrder', 'op'));
     }
 
     // =========================================================================
@@ -42,6 +45,12 @@ class OrderController extends Controller
     // =========================================================================
     public function placeOrder(Request $request)
     {
+        // Strict operational hours check on submission
+        $op = $this->checkOperationalHours();
+        if (!$op['is_open']) {
+            return back()->withInput()->with('error', $op['message']);
+        }
+
         $request->validate([
             'customer_name' => 'required|string|max:100',
             'address'       => 'required|string',
@@ -368,15 +377,15 @@ class OrderController extends Controller
                     ?? $data['link']
                     ?? null;
 
-                // Ambil Mayar invoice/payment ID untuk keperluan status check
+                // Ambil Mayar invoice/payment ID (UUID) untuk keperluan status check API
                 $mayarId = $data['data']['id']
                     ?? $data['data']['paymentId']
                     ?? $data['id']
                     ?? null;
 
                 // Fallback: extract ID dari URL link (contoh: .../invoices/xxstjgnbu9)
-                if (!$mayarId && $link && preg_match('/\/invoices\/([a-z0-9]+)/i', $link, $m)) {
-                    $mayarId = $m[1];
+                if (!$mayarId && $link && preg_match('/\/(invoices|pay|p)\/([a-z0-9]+)/i', $link, $m)) {
+                    $mayarId = $m[2];
                 }
 
                 if (!$link) {
@@ -550,5 +559,64 @@ class OrderController extends Controller
         $a    = sin($dLat / 2) ** 2
               + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
         return round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)), 2);
+    }
+
+    /**
+     * Check if the store is currently open.
+     */
+    private function checkOperationalHours(): array
+    {
+        $operationalDays = json_decode(Setting::get('operational_days', '[]'), true);
+        $openTime = Setting::get('open_time', '17:00');
+        $closeTime = Setting::get('close_time', '21:00');
+
+        $now = now();
+        $currentDay = $now->format('l');
+        $currentTime = $now->format('H:i');
+
+        if (empty($operationalDays)) {
+            return ['is_open' => true, 'message' => ''];
+        }
+
+        $daysMap = [
+            'Monday'    => 'Senin',
+            'Tuesday'   => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday'  => 'Kamis',
+            'Friday'    => 'Jumat',
+            'Saturday'  => 'Sabtu',
+            'Sunday'    => 'Minggu'
+        ];
+
+        if (!in_array($currentDay, $operationalDays)) {
+            $dayLabels = array_map(fn($d) => $daysMap[$d] ?? $d, $operationalDays);
+            return [
+                'is_open' => false, 
+                'message' => 'Mohon maaf, toko kami tutup hari ini. Kami hanya melayani pesanan pada hari ' . implode(', ', $dayLabels) . '.'
+            ];
+        }
+
+        $isOpen = false;
+
+        if ($closeTime < $openTime) {
+            // Rentang waktu melewati tengah malam (contoh: 17:00 - 02:00)
+            if ($currentTime >= $openTime || $currentTime <= $closeTime) {
+                $isOpen = true;
+            }
+        } else {
+            // Rentang waktu normal (contoh: 08:00 - 17:00)
+            if ($currentTime >= $openTime && $currentTime <= $closeTime) {
+                $isOpen = true;
+            }
+        }
+
+        if (!$isOpen) {
+            return [
+                'is_open' => false,
+                'message' => "Jam operasional kami mulai pukul $openTime s/d $closeTime WIB."
+            ];
+        }
+
+        return ['is_open' => true, 'message' => ''];
     }
 }

@@ -145,6 +145,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users',          [AdminUserController::class, 'index'])->name('users.index');
     Route::delete('/users/{user}',[AdminUserController::class, 'destroy'])->name('users.destroy');
 
-    // Settings (shipping config)
+    // Settings (shipping config & operational hours)
+    Route::get('/settings',  [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 });

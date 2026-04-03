@@ -8,6 +8,22 @@
 
         <form action="{{ route('checkout.place') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             @csrf
+
+            <!-- Pesan Operasional (JIKA TUTUP) -->
+            @if(!$op['is_open'])
+            <div class="lg:col-span-12 bg-red-50 border-2 border-red-200 rounded-2xl p-4 sm:p-6 mb-4 flex items-start gap-4">
+                <div class="w-12 h-12 bg-red-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-red-900">MOHON MAAF, PELAYANAN ONLINE SEDANG TUTUP</h3>
+                    <p class="text-red-700 mt-1 font-medium leading-relaxed">
+                        {{ $op['message'] }}
+                    </p>
+                    <p class="text-red-600 text-xs mt-2 italic font-bold uppercase tracking-wider">Anda tidak dapat melanjutkan pembayaran saat ini.</p>
+                </div>
+            </div>
+            @endif
             
             <!-- Kolom Kiri: Data Pengiriman -->
             <div class="lg:col-span-7 space-y-6">
@@ -141,8 +157,9 @@
                     </div>
                 
                     <button type="submit"
-                            class="w-full bg-green-700 text-white py-3.5 sm:py-4 mt-6 rounded-2xl font-black text-lg sm:text-xl btn-glow hover:bg-green-600 transition-all shadow-lg">
-                        Bayar Sekarang
+                            @if(!$op['is_open']) disabled @endif
+                            class="w-full {{ $op['is_open'] ? 'bg-green-700 hover:bg-green-600 btn-glow' : 'bg-gray-400 cursor-not-allowed opacity-60' }} text-white py-3.5 sm:py-4 mt-6 rounded-2xl font-black text-lg sm:text-xl transition-all shadow-lg">
+                        {{ $op['is_open'] ? 'Bayar Sekarang' : 'Toko Sedang Tutup' }}
                     </button>
                     <p class="text-center text-gray-400 text-[10px] sm:text-xs mt-3">Pembayaran diproses dengan aman melalui Mayar. Mendukung Transfer Bank, QRIS, GoPay, OVO, dan metode lainnya.</p>
                 </div>
@@ -172,8 +189,8 @@
 <script>
 (function () {
     // Koordinat dari pesanan sebelumnya (jika ada)
-    var savedLat = {{ $lastOrder?->latitude  ? $lastOrder->latitude  : 'null' }};
-    var savedLng = {{ $lastOrder?->longitude ? $lastOrder->longitude : 'null' }};
+    var savedLat = {!! isset($lastOrder->latitude) ? $lastOrder->latitude : 'null' !!};
+    var savedLng = {!! isset($lastOrder->longitude) ? $lastOrder->longitude : 'null' !!};
 
     var initLat  = savedLat || -2.5;
     var initLng  = savedLng || 118.0;

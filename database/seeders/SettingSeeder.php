@@ -13,9 +13,9 @@ class SettingSeeder extends Seeder
             'admin_latitude' => '-7.5113618',
             'admin_longitude' => '112.2585315',
             'admin_address' => 'Jalan Tanjunggunung - Dukuhklopo, Kali Kejambon, Jombang, Jawa Timur, Jawa, 61481, Indonesia',
-            'shipping_rate_per_km' => '3000',
+            'shipping_rate_per_km' => '2000',
             'min_distance_km' => '3',
-            'max_distance_km' => '10',
+            'max_distance_km' => '30',
         ];
 
         foreach ($settings as $key => $value) {
