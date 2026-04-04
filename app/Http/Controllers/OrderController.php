@@ -37,7 +37,24 @@ class OrderController extends Controller
         // Check operational hours
         $op = $this->checkOperationalHours();
 
-        return view('customer.checkout', compact('carts', 'total', 'lastOrder', 'op'));
+        // Check Global Discount
+        $globalDiscount = [
+            'active' => Setting::get('global_discount_active', '0') === '1',
+            'type' => Setting::get('global_discount_type', 'percent'),
+            'target' => Setting::get('global_discount_target', 'subtotal'),
+            'value' => (float) Setting::get('global_discount_value', 0),
+        ];
+
+        $globalDiscountAmount = 0;
+        if ($globalDiscount['active'] && $globalDiscount['target'] === 'subtotal') {
+            if ($globalDiscount['type'] === 'percent') {
+                $globalDiscountAmount = $total * ($globalDiscount['value'] / 100);
+            } else {
+                $globalDiscountAmount = min($globalDiscount['value'], $total);
+            }
+        }
+
+        return view('customer.checkout', compact('carts', 'total', 'lastOrder', 'op', 'globalDiscount', 'globalDiscountAmount'));
     }
 
     // =========================================================================
@@ -53,17 +70,18 @@ class OrderController extends Controller
 
         $request->validate([
             'customer_name' => 'required|string|max:100',
-            'address'       => 'required|string',
-            'phone'         => 'required|regex:/^[0-9]+$/|min:10|max:20',
-            'latitude'      => 'required|numeric',
-            'longitude'     => 'required|numeric',
+            'address' => 'required|string',
+            'phone' => 'required|regex:/^[0-9]+$/|min:10|max:20',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'voucher_code' => 'nullable|string',
         ], [
-            'phone.regex'        => 'No. HP / WhatsApp hanya boleh berisi angka.',
-            'phone.min'          => 'No. HP / WhatsApp minimal 10 karakter.',
-            'latitude.required'  => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
+            'phone.regex' => 'No. HP / WhatsApp hanya boleh berisi angka.',
+            'phone.min' => 'No. HP / WhatsApp minimal 10 karakter.',
+            'latitude.required' => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
             'longitude.required' => 'Titik lokasi pengiriman peta (Pin Merah) belum dipilih.',
-            'latitude.numeric'   => 'Format titik lokasi tidak valid.',
-            'longitude.numeric'  => 'Format titik lokasi tidak valid.',
+            'latitude.numeric' => 'Format titik lokasi tidak valid.',
+            'longitude.numeric' => 'Format titik lokasi tidak valid.',
         ]);
 
         $carts = Cart::with('product')
@@ -78,29 +96,29 @@ class OrderController extends Controller
         $subtotal = $carts->sum(fn($c) => $c->subtotal);
 
         // ── Hitung ongkos kirim via OSRM ──────────────────────────────────────
-        $userLat   = $request->filled('latitude')  ? (float) $request->latitude  : null;
-        $userLng   = $request->filled('longitude') ? (float) $request->longitude : null;
-        $adminLat  = (float) Setting::get('admin_latitude',  0);
-        $adminLng  = (float) Setting::get('admin_longitude', 0);
+        $userLat = $request->filled('latitude') ? (float) $request->latitude : null;
+        $userLng = $request->filled('longitude') ? (float) $request->longitude : null;
+        $adminLat = (float) Setting::get('admin_latitude', 0);
+        $adminLng = (float) Setting::get('admin_longitude', 0);
         $ratePerKm = (float) Setting::get('shipping_rate_per_km', 0);
-        $minKm     = (float) Setting::get('min_distance_km', 0);
-        $maxKm     = (float) Setting::get('max_distance_km', 0);
+        $minKm = (float) Setting::get('min_distance_km', 0);
+        $maxKm = (float) Setting::get('max_distance_km', 0);
 
         // Jika lokasi pengguna / toko belum di set pastikan di tolak
         if (!$userLat || !$userLng) {
-             return back()->withInput()->with('error', 'Silakan pilih lokasi pengiriman pada peta terlebih dahulu.');
+            return back()->withInput()->with('error', 'Silakan pilih lokasi pengiriman pada peta terlebih dahulu.');
         }
 
         if (!$adminLat && !$adminLng) {
             return back()->withInput()->with('error', 'Mohon maaf, lokasi toko kami belum diatur sehingga ongkos kirim belum bisa dihitung.');
         }
 
-        $distanceKm   = 0;
+        $distanceKm = 0;
         $shippingCost = 0;
 
         if ($ratePerKm > 0) {
-            $distanceKm   = $this->getOsrmDistance($adminLat, $adminLng, $userLat, $userLng);
-            
+            $distanceKm = $this->getOsrmDistance($adminLat, $adminLng, $userLat, $userLng);
+
             if ($maxKm > 0 && $distanceKm > $maxKm) {
                 return back()->withInput()->with('error', 'Lokasi pengiriman diluar jangkauan maksimal (' . $maxKm . ' km).');
             }
@@ -109,29 +127,73 @@ class OrderController extends Controller
             $shippingCost = (int) ceil($calcDist * $ratePerKm);
         }
 
-        $total = $subtotal + $shippingCost;
+        // ── Hitung Diskon Global ──────────────────────────────────────────────
+        $globalDiscActive = Setting::get('global_discount_active', '0') === '1';
+        $globalDiscType = Setting::get('global_discount_type', 'percent');
+        $globalDiscTarget = Setting::get('global_discount_target', 'subtotal');
+        $globalDiscValue = (float) Setting::get('global_discount_value', 0);
+
+        $globalDiscountAmount = 0;
+        if ($globalDiscActive) {
+            $targetVal = ($globalDiscTarget === 'subtotal') ? $subtotal : $shippingCost;
+            if ($globalDiscType === 'percent') {
+                $globalDiscountAmount = $targetVal * ($globalDiscValue / 100);
+            } else {
+                $globalDiscountAmount = min($globalDiscValue, $targetVal);
+            }
+        }
+
+        // ── Hitung Voucher ───────────────────────────────────────────────────
+        $voucherDiscount = 0;
+        $voucherCode = null;
+        $voucherId = null;
+
+        if ($request->filled('voucher_code')) {
+            $code = strtoupper($request->voucher_code);
+            $voucher = \App\Models\Voucher::where('code', $code)->first();
+
+            if ($voucher && $voucher->isValid($subtotal, auth()->user())) {
+                $voucherCode = $voucher->code;
+                $voucherId = $voucher->id;
+                $targetVal = ($voucher->target === 'subtotal') ? $subtotal : $shippingCost;
+                $voucherDiscount = $voucher->calculateDiscount($targetVal);
+            }
+        }
+
+        $total = $subtotal + $shippingCost - $globalDiscountAmount - $voucherDiscount;
+        if ($total < 0)
+            $total = 0;
 
         // ── Simpan order ke database ───────────────────────────────────────────
         $order = Order::create([
-            'user_id'       => auth()->id(),
+            'user_id' => auth()->id(),
             'customer_name' => $request->customer_name,
-            'address'       => $request->address,
-            'latitude'      => $userLat,
-            'longitude'     => $userLng,
-            'phone'         => $request->phone,
-            'total_price'   => $total,
+            'address' => $request->address,
+            'latitude' => $userLat,
+            'longitude' => $userLng,
+            'phone' => $request->phone,
+            'total_price' => $total,
             'shipping_cost' => $shippingCost,
-            'distance_km'   => $distanceKm > 0 ? round($distanceKm, 2) : null,
-            'status'        => 'menunggu_pembayaran',
+            'distance_km' => $distanceKm > 0 ? round($distanceKm, 2) : null,
+            'voucher_code' => $voucherCode,
+            'voucher_discount' => $voucherDiscount,
+            'global_discount_amount' => $globalDiscountAmount,
+            'status' => 'menunggu_pembayaran',
         ]);
+
+        // Kirim voucher_id ke deductStock via session atau cara lain jika perlu, 
+        // tapi kita bisa ambil dari $voucherId di sini jika kita panggil deductStock langsung.
+        // Namun deductStock dipanggil saat webhook/sync. Kita simpan di order (sudah ada voucher_code).
+        // Kita butuh voucher_id di Order untuk tracking usage lebih presisi.
+        // Mari kita tambahkan voucher_id ke orders table juga.
 
         // ── Simpan item pesanan ────────────────────────────────────────────────
         foreach ($carts as $cart) {
             OrderItem::create([
-                'order_id'   => $order->id,
+                'order_id' => $order->id,
                 'product_id' => $cart->product_id,
-                'quantity'   => $cart->quantity,
-                'price'      => $cart->product->price,
+                'quantity' => $cart->quantity,
+                'price' => $cart->product->price,
             ]);
         }
 
@@ -139,12 +201,12 @@ class OrderController extends Controller
         $referenceId = 'IWAKQU-' . $order->id . '-' . time();
         $mayarResult = $this->createMayarPayment($order, $referenceId, $carts, $shippingCost, $distanceKm);
         $paymentLink = $mayarResult['link'] ?? null;
-        $mayarId     = $mayarResult['mayar_id'] ?? null;
+        $mayarId = $mayarResult['mayar_id'] ?? null;
 
         if ($paymentLink) {
             $order->update([
                 'payment_link' => $paymentLink,
-                'mayar_id'     => $mayarId,
+                'mayar_id' => $mayarId,
             ]);
         }
 
@@ -214,8 +276,8 @@ class OrderController extends Controller
             ['order_id' => $order->id],
             [
                 'user_id' => auth()->id(),
-                'rating'  => $request->rating,
-                'review'  => $request->review,
+                'rating' => $request->rating,
+                'review' => $request->review,
             ]
         );
 
@@ -234,9 +296,9 @@ class OrderController extends Controller
         }
 
         $message = match ($order->status) {
-            'dibayar'   => 'Pembayaran berhasil! Pesanan Anda sedang diproses. ✅',
+            'dibayar' => 'Pembayaran berhasil! Pesanan Anda sedang diproses. ✅',
             'dibatalkan' => 'Pembayaran dibatalkan atau kadaluarsa.',
-            default      => 'Silakan cek kembali status pesanan Anda.',
+            default => 'Silakan cek kembali status pesanan Anda.',
         };
 
         $type = $order->status === 'dibayar' ? 'success' : 'info';
@@ -264,8 +326,8 @@ class OrderController extends Controller
             $referenceId = 'IWAKQU-' . $order->id . '-' . time();
 
             // Konversi orderItems ke koleksi seperti Cart untuk createMayarPayment
-            $fakeItems = $order->orderItems->map(fn($item) => (object)[
-                'product'  => $item->product,
+            $fakeItems = $order->orderItems->map(fn($item) => (object) [
+                'product' => $item->product,
                 'quantity' => $item->quantity,
             ]);
 
@@ -278,12 +340,12 @@ class OrderController extends Controller
             );
 
             $paymentLink = $mayarResult['link'] ?? null;
-            $mayarId     = $mayarResult['mayar_id'] ?? null;
+            $mayarId = $mayarResult['mayar_id'] ?? null;
 
             if ($paymentLink) {
                 $order->update([
                     'payment_link' => $paymentLink,
-                    'mayar_id'     => $mayarId,
+                    'mayar_id' => $mayarId,
                 ]);
             } else {
                 return redirect()->route('orders.show', $order)
@@ -309,7 +371,7 @@ class OrderController extends Controller
     private function createMayarPayment(Order $order, string $referenceId, $carts, float $shippingCost, float $distanceKm): ?array
     {
         $isProduction = config('services.mayar.is_production', false);
-        $apiKey       = config('services.mayar.api_key', '');
+        $apiKey = config('services.mayar.api_key', '');
         $baseUrl = $isProduction
             ? 'https://api.mayar.id/hl/v1'
             : 'https://api.mayar.club/hl/v1';
@@ -331,11 +393,11 @@ class OrderController extends Controller
 
         // Format payload sesuai Mayar Headless API (field mobile/email di root)
         $payload = [
-            'name'        => 'Pesanan IwakQu #' . $order->id,
-            'amount'      => (int) $order->total_price,
+            'name' => 'Pesanan IwakQu #' . $order->id,
+            'amount' => (int) $order->total_price,
             'description' => $description ?: 'Ikan Marinasi IwakQu',
-            'mobile'      => $order->phone,
-            'email'       => auth()->user()->email,
+            'mobile' => $order->phone,
+            'email' => auth()->user()->email,
             'referenceId' => $referenceId, // ← agar Mayar mengirim balik di webhook
             // Route publik agar tidak error 403 saat session hilang setelah redirect dari Mayar
             'redirectUrl' => route('payment.return', $order),
@@ -346,26 +408,26 @@ class OrderController extends Controller
             $ch = curl_init($endpoint);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST           => true,
-                CURLOPT_POSTFIELDS     => json_encode($payload),
-                CURLOPT_HTTPHEADER     => [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_HTTPHEADER => [
                     'Content-Type: application/json',
                     'Authorization: Bearer ' . $apiKey,
                 ],
-                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_TIMEOUT => 15,
                 CURLOPT_SSL_VERIFYPEER => false,
             ]);
 
-            $response  = curl_exec($ch);
-            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
             curl_close($ch);
 
             Log::info('[Mayar] Payment create', [
-                'endpoint'  => $endpoint,
+                'endpoint' => $endpoint,
                 'http_code' => $httpCode,
-                'curl_err'  => $curlError ?: null,
-                'response'  => $response ? substr($response, 0, 500) : null,
+                'curl_err' => $curlError ?: null,
+                'response' => $response ? substr($response, 0, 500) : null,
             ]);
 
             if ($response && $httpCode === 200) {
@@ -397,8 +459,8 @@ class OrderController extends Controller
 
             Log::error('[Mayar] API gagal', [
                 'http_code' => $httpCode,
-                'response'  => $response,
-                'curl_err'  => $curlError,
+                'response' => $response,
+                'curl_err' => $curlError,
             ]);
         } catch (\Exception $e) {
             Log::error('[Mayar] Exception: ' . $e->getMessage());
@@ -431,23 +493,24 @@ class OrderController extends Controller
         }
 
         $isProduction = config('services.mayar.is_production', false);
-        $apiKey       = config('services.mayar.api_key', '');
-        $baseUrl      = $isProduction
+        $apiKey = config('services.mayar.api_key', '');
+        $baseUrl = $isProduction
             ? 'https://api.mayar.id/hl/v1'
             : 'https://api.mayar.club/hl/v1';
 
-        if (empty($apiKey)) return;
+        if (empty($apiKey))
+            return;
 
         try {
             $endpoint = $baseUrl . '/payment/' . $mayarId;
             $ch = curl_init($endpoint);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPGET        => true,
-                CURLOPT_HTTPHEADER     => [
+                CURLOPT_HTTPGET => true,
+                CURLOPT_HTTPHEADER => [
                     'Authorization: Bearer ' . $apiKey,
                 ],
-                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_TIMEOUT => 10,
                 CURLOPT_SSL_VERIFYPEER => false,
             ]);
 
@@ -456,14 +519,14 @@ class OrderController extends Controller
             curl_close($ch);
 
             Log::info('[Mayar] Status check', [
-                'order_id'  => $order->id,
-                'mayar_id'  => $mayarId,
+                'order_id' => $order->id,
+                'mayar_id' => $mayarId,
                 'http_code' => $httpCode,
-                'response'  => $response ? substr($response, 0, 300) : null,
+                'response' => $response ? substr($response, 0, 300) : null,
             ]);
 
             if ($response && $httpCode === 200) {
-                $data   = json_decode($response, true);
+                $data = json_decode($response, true);
                 $status = $data['data']['status']
                     ?? $data['data']['paymentStatus']
                     ?? $data['status']
@@ -471,24 +534,24 @@ class OrderController extends Controller
 
                 if (in_array(strtolower((string) $status), ['paid', 'settlement', 'success'])) {
                     $order->update([
-                        'status'         => 'dibayar',
+                        'status' => 'dibayar',
                         'transaction_id' => $data['data']['id'] ?? $order->transaction_id,
                         'payment_method' => $data['data']['paymentType'] ?? $data['data']['payment_method'] ?? $order->payment_method,
-                        'mayar_id'       => $mayarId,
+                        'mayar_id' => $mayarId,
                     ]);
                     $this->deductStock($order);
-                    
+
                     $admins = \App\Models\User::where('role', 'admin')->get();
                     \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\OrderPaidNotification($order));
-                    
+
                     Log::info('[Mayar] Order diupdate ke dibayar via API check', ['order_id' => $order->id]);
                 } elseif (in_array(strtolower((string) $status), ['expired', 'failed', 'cancel', 'cancelled'])) {
                     $order->update(['status' => 'dibatalkan']);
-                    
+
                     if ($order->user) {
                         $order->user->notify(new \App\Notifications\OrderStatusUpdatedNotification($order, 'dibatalkan'));
                     }
-                    
+
                     Log::info('[Mayar] Order diupdate ke dibatalkan via API check', ['order_id' => $order->id]);
                 }
             }
@@ -511,6 +574,19 @@ class OrderController extends Controller
                 ->decrement('stock', $item->quantity);
         }
 
+        // Catat penggunaan voucher jika ada
+        if ($order->voucher_code) {
+            $voucher = \App\Models\Voucher::where('code', $order->voucher_code)->first();
+            if ($voucher) {
+                \App\Models\VoucherUsage::firstOrCreate([
+                    'order_id' => $order->id,
+                ], [
+                    'user_id' => $order->user_id,
+                    'voucher_id' => $voucher->id,
+                ]);
+            }
+        }
+
         Log::info('[Stock] Stok dikurangi setelah pembayaran', ['order_id' => $order->id]);
     }
 
@@ -525,11 +601,13 @@ class OrderController extends Controller
             // OSRM menerima koordinat dalam format: longitude,latitude
             $url = sprintf(
                 'https://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=false',
-                $lon1, $lat1,
-                $lon2, $lat2
+                $lon1,
+                $lat1,
+                $lon2,
+                $lat2
             );
 
-            $ctx      = stream_context_create(['http' => ['timeout' => 6]]);
+            $ctx = stream_context_create(['http' => ['timeout' => 6]]);
             $response = @file_get_contents($url, false, $ctx);
 
             if ($response) {
@@ -553,11 +631,11 @@ class OrderController extends Controller
      */
     private function haversine(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
-        $R    = 6371;
+        $R = 6371;
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
-        $a    = sin($dLat / 2) ** 2
-              + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
         return round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)), 2);
     }
 
@@ -567,8 +645,8 @@ class OrderController extends Controller
     private function checkOperationalHours(): array
     {
         $operationalDays = json_decode(Setting::get('operational_days', '[]'), true);
-        $openTime = Setting::get('open_time', '17:00');
-        $closeTime = Setting::get('close_time', '21:00');
+        $openTime = Setting::get('open_time');
+        $closeTime = Setting::get('close_time');
 
         $now = now();
         $currentDay = $now->format('l');
@@ -579,19 +657,19 @@ class OrderController extends Controller
         }
 
         $daysMap = [
-            'Monday'    => 'Senin',
-            'Tuesday'   => 'Selasa',
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
             'Wednesday' => 'Rabu',
-            'Thursday'  => 'Kamis',
-            'Friday'    => 'Jumat',
-            'Saturday'  => 'Sabtu',
-            'Sunday'    => 'Minggu'
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+            'Sunday' => 'Minggu'
         ];
 
         if (!in_array($currentDay, $operationalDays)) {
             $dayLabels = array_map(fn($d) => $daysMap[$d] ?? $d, $operationalDays);
             return [
-                'is_open' => false, 
+                'is_open' => false,
                 'message' => 'Mohon maaf, toko kami tutup hari ini. Kami hanya melayani pesanan pada hari ' . implode(', ', $dayLabels) . '.'
             ];
         }

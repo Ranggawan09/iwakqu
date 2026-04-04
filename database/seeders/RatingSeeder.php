@@ -37,7 +37,7 @@ class RatingSeeder extends Seeder
             [
                 'name' => 'Dewi Lestari',
                 'rating' => 5,
-                'review' => 'Harga terjangkau tapi kualitas premium. Sudah berlangganan 3 bulan, tidak pernah mengecewakan!',
+                'review' => 'Harga terjangkau tapi kualitas premium. Sudah berlangganan, tidak pernah mengecewakan!',
             ],
             [
                 'name' => 'Ahmad Fauzi',
@@ -54,12 +54,12 @@ class RatingSeeder extends Seeder
         foreach ($reviews as $index => $data) {
             // 1. Buat User fiktif
             $user = User::firstOrCreate(
-            ['email' => 'customer' . ($index + 10) . '@iwakqu.com'],
-            [
-                'name' => $data['name'],
-                'password' => Hash::make('password'),
-                'role' => 'user',
-            ]
+                ['email' => 'customer' . ($index + 10) . '@iwakqu.com'],
+                [
+                    'name' => $data['name'],
+                    'password' => Hash::make('password'),
+                    'role' => 'user',
+                ]
             );
 
             // 2. Buat Order (status selesai)

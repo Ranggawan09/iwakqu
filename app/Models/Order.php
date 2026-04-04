@@ -22,10 +22,16 @@ class Order extends Model
         'snap_token',
         'payment_link',
         'mayar_id',
+        'voucher_code',
+        'voucher_discount',
+        'global_discount_amount',
     ];
 
     protected $casts = [
         'total_price' => 'decimal:0',
+        'shipping_cost' => 'decimal:0',
+        'voucher_discount' => 'decimal:0',
+        'global_discount_amount' => 'decimal:0',
     ];
 
     public function user()

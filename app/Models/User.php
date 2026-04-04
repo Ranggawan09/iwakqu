@@ -16,6 +16,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -27,8 +29,16 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'         => 'hashed',
         ];
+    }
+
+    /**
+     * Cek apakah user login via Google (tidak punya password manual).
+     */
+    public function isGoogleUser(): bool
+    {
+        return !is_null($this->google_id) && is_null($this->getAttributes()['password'] ?? null);
     }
 
     public function isAdmin(): bool

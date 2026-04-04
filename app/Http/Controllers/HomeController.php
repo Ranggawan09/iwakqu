@@ -29,6 +29,13 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        return view('home.index', compact('products', 'testimonials'));
+        $globalDiscount = [
+            'active' => Setting::get('global_discount_active') === '1',
+            'type'   => Setting::get('global_discount_type'),
+            'target' => Setting::get('global_discount_target'),
+            'value'  => (float)Setting::get('global_discount_value', 0),
+        ];
+
+        return view('home.index', compact('products', 'testimonials', 'globalDiscount'));
     }
 }

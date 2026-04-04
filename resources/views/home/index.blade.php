@@ -20,7 +20,7 @@
                 Segar Langsung<br>ke Pintu Anda
             </h1>
             <p class="text-green-200 text-lg mb-8 leading-relaxed max-w-md">
-                Nikmati kelezatan berbagai ikan pilihan Nusantara — Gurame, Nila, Kakap, Patin & lebih banyak lagi. Dimarinasi bumbu khas, diolah higienis, dikirim cepat.
+                Nikmati kelezatan berbagai ikan pilihan Nusantara. Dimarinasi bumbu khas, diolah higienis, dikirim cepat.
             </p>
             <div class="flex flex-col sm:flex-row gap-4">
                 <a href="{{ auth()->check() ? route('cart.index') : route('register') }}#produk"
@@ -33,7 +33,7 @@
             </div>
             <div class="flex items-center gap-6 mt-10">
                 <div class="text-center">
-                    <div class="text-yellow-400 font-black text-2xl">500+</div>
+                    <div class="text-yellow-400 font-black text-2xl">20+</div>
                     <div class="text-green-300 text-sm">Pelanggan Puas</div>
                 </div>
                 <div class="w-px h-10 bg-green-600"></div>
@@ -51,7 +51,7 @@
         <div class="flex justify-center fade-in">
             <div class="relative">
                 <div class="absolute inset-0 bg-yellow-400 opacity-20 rounded-full blur-3xl scale-110"></div>
-                <img src="{{ asset('images/products/hero.jpg') }}" alt="Ikan Marinasi IwakQu"
+                <img src="{{ asset('images/products/hero.webp') }}" alt="Ikan Marinasi IwakQu"
                      class="relative w-full max-w-md rounded-3xl shadow-2xl object-cover aspect-square"
                      onerror="this.src='https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=600&q=80'; this.onerror=null;">
             </div>
@@ -66,11 +66,23 @@
         <div class="text-center mb-14">
             <span class="inline-block bg-green-100 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-3">Produk Unggulan</span>
             <h2 class="text-4xl font-black text-gray-900 mb-4">Ikan Marinasi <span class="text-green-700">Pilihan Kami</span></h2>
-            <p class="text-gray-500 max-w-xl mx-auto">9 pilihan ikan Nusantara dengan resep marinasi bumbu asli — diolah higienis, segar, siap masak, dan penuh cita rasa.</p>
+            <p class="text-gray-500 max-w-xl mx-auto">Ikan Nusantara dengan resep marinasi bumbu asli — diolah higienis, segar, siap masak, dan penuh cita rasa.</p>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6 max-w-7xl mx-auto">
             @foreach($products as $product)
+            @php
+                $finalPrice = $product->price;
+                if (isset($globalDiscount) && $globalDiscount['active'] && $globalDiscount['target'] === 'subtotal') {
+                    if ($globalDiscount['type'] === 'percent') {
+                        $finalPrice -= ($product->price * ($globalDiscount['value'] / 100));
+                    } else {
+                        $finalPrice -= $globalDiscount['value'];
+                    }
+                    $finalPrice = max(0, $finalPrice);
+                }
+                $isDiscounted = $finalPrice < $product->price;
+            @endphp
             <div class="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-md card-hover border border-gray-100 flex flex-col">
                 <div class="relative h-40 sm:h-64 overflow-hidden flex-shrink-0">
                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
@@ -80,8 +92,17 @@
                         Stok: {{ $product->stock }}
                     </div>
                     @if($product->stock < 9 && $product->stock > 0)
-                    <div class="absolute top-2 right-2 sm:top-4 sm:right-4 bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-3 sm:py-1.5 rounded-full">
+                    <div class="absolute top-2 right-2 sm:top-4 sm:right-4 bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-3 sm:py-1.5 rounded-full shadow-sm">
                         Hampir Habis!
+                    </div>
+                    @endif
+
+                    {{-- Global Discount Badge --}}
+                    @if($isDiscounted)
+                    <div class="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 bg-yellow-400 text-green-900 text-[10px] sm:text-xs font-black px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-lg flex items-center gap-1 animate-bounce z-10">
+                        <span>
+                            {{ $globalDiscount['type'] === 'percent' ? $globalDiscount['value'] . '%' : 'Rp' . number_format($globalDiscount['value'], 0, ',', '.') }} OFF
+                        </span>
                     </div>
                     @endif
                 </div>
@@ -93,8 +114,18 @@
                             @if(!auth()->user()->isAdmin())
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-3">
                                 <div class="flex-shrink-0">
-                                    <span class="text-sm xl:text-xl sm:text-lg font-black text-green-700">{{ $product->formatted_price }}</span>
-                                    <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
+                                    @if($isDiscounted)
+                                        <span class="text-[10px] sm:text-xs text-gray-400 line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-sm xl:text-xl sm:text-lg font-black text-green-600">Rp {{ number_format($finalPrice, 0, ',', '.') }}</span>
+                                            <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-sm xl:text-xl sm:text-lg font-black text-green-700">{{ $product->formatted_price }}</span>
+                                            <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
+                                        </div>
+                                    @endif
                                 </div>
                                 
                                 {{-- Tambah ke keranjang --}}
@@ -127,8 +158,18 @@
                         @else
                         <div class="flex items-center justify-between mb-1 sm:mb-3">
                             <div>
-                                <span class="text-sm sm:text-2xl font-black text-green-700">{{ $product->formatted_price }}</span>
-                                <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
+                                @if($isDiscounted)
+                                    <span class="block text-[10px] sm:text-xs text-gray-400 line-through">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-sm sm:text-2xl font-black text-green-600">Rp {{ number_format($finalPrice, 0, ',', '.') }}</span>
+                                        <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
+                                    </div>
+                                @else
+                                    <div>
+                                        <span class="text-sm sm:text-2xl font-black text-green-700">{{ $product->formatted_price }}</span>
+                                        <span class="text-gray-400 text-[10px] sm:text-xs">/ porsi</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="flex flex-col gap-1.5 sm:gap-2 w-full">

@@ -130,13 +130,13 @@
                             <div class="flex-1">
                                 <label class="block text-sm font-bold text-gray-700 mb-3">Jam Buka</label>
                                 <input type="time" name="open_time" required
-                                       value="{{ $setting['open_time'] ?? '08:00' }}"
+                                       value="{{ $setting['open_time'] ?? '17:00' }}"
                                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:border-green-500 outline-none transition-all">
                             </div>
                             <div class="flex-1">
                                 <label class="block text-sm font-bold text-gray-700 mb-3">Jam Tutup</label>
                                 <input type="time" name="close_time" required
-                                       value="{{ $setting['close_time'] ?? '17:00' }}"
+                                       value="{{ $setting['close_time'] ?? '21:00' }}"
                                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:border-green-500 outline-none transition-all">
                             </div>
                         </div>
@@ -163,9 +163,180 @@
                 </div>
             </form>
         </div>
-    </div>
 
-    {{-- ── Right Column: Info / Help ──────────────────────────────── --}}
+
+    <div class="space-y-6">
+        {{-- Manajemen Voucher --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-700 to-green-700 px-6 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12.75 3.75a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5ZM7.5 5.25a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H7.5ZM16.5 5.25a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM5.25 7.5a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V7.5ZM18.75 7.5a.75.75 0 0 0 1.5 0v1.5a.75.75 0 0 0-1.5 0V7.5ZM3.75 12.75a.75.75 0 1 1 0-1.5 1.5 1.5 0 0 1 1.5 1.5h-1.5ZM18.75 12.75a1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 0 3h-1.5a1.5 1.5 0 0 1-1.5-1.5h1.5ZM4.5 15.75a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5ZM15.75 18.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM11.25 18.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM7.5 18.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H7.5ZM15.75 4.5a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V4.5ZM15.75 4.5v1.5M10.5 8.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5Z" /></svg>
+                        Manajemen Voucher
+                    </h2>
+                </div>
+            </div>
+            <div class="p-6">
+                {{-- Form Tambah Voucher --}}
+                <form action="{{ route('admin.vouchers.store') }}" method="POST" class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-6">
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] font-black text-gray-500 uppercase mb-1">Kode</label>
+                            <input type="text" name="code" required class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm uppercase font-bold focus:border-green-500 outline-none" placeholder="DISKON10">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-black text-gray-500 uppercase mb-1">Tipe</label>
+                                <select name="type" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-500 outline-none">
+                                    <option value="percent">%</option>
+                                    <option value="fixed">Rp</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-black text-gray-500 uppercase mb-1">Potongan</label>
+                                <input type="number" name="value" required class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-500 outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-black text-gray-500 uppercase mb-1">Target</label>
+                                <select name="target" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-500 outline-none">
+                                    <option value="subtotal">Produk</option>
+                                    <option value="shipping">Ongkir</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-black text-gray-500 uppercase mb-1">Min. Belanja</label>
+                                <input type="number" name="min_purchase" value="0" class="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-500 outline-none">
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer pt-1">
+                            <input type="checkbox" name="is_single_use" value="1" class="w-4 h-4 text-green-700 border-gray-300 rounded focus:ring-green-500">
+                            <span class="text-xs font-bold text-gray-700">Sekali Pakai Per User</span>
+                        </label>
+                        <button type="submit" class="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-green-600 transition-colors">
+                            TAMBAH VOUCHER
+                        </button>
+                    </div>
+                </form>
+
+                {{-- Daftar Voucher (Compact) --}}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="pb-3 text-[10px] font-black text-gray-400 uppercase">Voucher</th>
+                                <th class="pb-3 text-[10px] font-black text-gray-400 uppercase text-center">Status</th>
+                                <th class="pb-3 text-[10px] font-black text-gray-400 uppercase text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            @forelse($vouchers as $v)
+                            <tr>
+                                <td class="py-3">
+                                    <div class="flex flex-col">
+                                        <span class="font-black text-gray-900 text-xs tracking-widest">{{ $v->code }}</span>
+                                        <span class="text-[9px] text-gray-500 uppercase font-bold">
+                                            {{ $v->type === 'percent' ? $v->value . '%' : 'Rp ' . number_format($v->value, 0, ',', '.') }}
+                                            ({{ $v->target === 'subtotal' ? 'Prd' : 'Ong' }})
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="py-3 text-center">
+                                    <form action="{{ route('admin.vouchers.toggle', $v->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="relative inline-flex h-4 w-8 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none {{ $v->is_active ? 'bg-green-500' : 'bg-gray-200' }}">
+                                            <span class="inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 {{ $v->is_active ? 'translate-x-4' : 'translate-x-1' }}"></span>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="py-3 text-right">
+                                    <form action="{{ route('admin.vouchers.destroy', $v->id) }}" method="POST" onsubmit="return confirm('Hapus?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="text-red-400 hover:text-red-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="py-4 text-center text-[10px] text-gray-400 italic">Kosong</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- Diskon Global --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-pink-700 to-pink-600 px-6 py-4 flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z"/><path d="M12 7a1 1 0 0 0-1 1v2.58l-1.29 1.3a1 1 0 0 0 1.42 1.42l2-2A1 1 0 0 0 13 10V8a1 1 0 0 0-1-1Z"/></svg>
+                        Diskon Global
+                    </h2>
+                </div>
+            </div>
+
+            <form action="{{ route('admin.settings.update') }}" method="POST" class="p-6">
+                @csrf
+                <input type="hidden" name="admin_latitude" value="{{ $setting['admin_latitude'] ?? '' }}">
+                <input type="hidden" name="admin_longitude" value="{{ $setting['admin_longitude'] ?? '' }}">
+                <input type="hidden" name="admin_address" value="{{ $setting['admin_address'] ?? '' }}">
+                <input type="hidden" name="shipping_rate_per_km" value="{{ $setting['shipping_rate_per_km'] ?? '0' }}">
+                <input type="hidden" name="min_distance_km" value="{{ $setting['min_distance_km'] ?? '0' }}">
+                <input type="hidden" name="max_distance_km" value="{{ $setting['max_distance_km'] ?? '0' }}">
+                @foreach(json_decode($setting['operational_days'] ?? '[]', true) as $day)
+                    <input type="hidden" name="operational_days[]" value="{{ $day }}">
+                @endforeach
+                <input type="hidden" name="open_time" value="{{ $setting['open_time'] ?? '17:00' }}">
+                <input type="hidden" name="close_time" value="{{ $setting['close_time'] ?? '21:00' }}">
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="text-xs font-black text-gray-700 uppercase">Aktifkan</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="global_discount_active" value="1" {{ ($setting['global_discount_active'] ?? '0') === '1' ? 'checked' : '' }} class="sr-only peer">
+                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Target</label>
+                            <select name="global_discount_target" class="w-full border-2 border-gray-100 rounded-xl px-2 py-2 text-xs font-bold focus:border-pink-500 outline-none">
+                                <option value="subtotal" {{ ($setting['global_discount_target'] ?? '') === 'subtotal' ? 'selected' : '' }}>Produk</option>
+                                <option value="shipping" {{ ($setting['global_discount_target'] ?? '') === 'shipping' ? 'selected' : '' }}>Ongkir</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Tipe</label>
+                            <select name="global_discount_type" class="w-full border-2 border-gray-100 rounded-xl px-2 py-2 text-xs font-bold focus:border-pink-500 outline-none">
+                                <option value="percent" {{ ($setting['global_discount_type'] ?? '') === 'percent' ? 'selected' : '' }}>%</option>
+                                <option value="fixed" {{ ($setting['global_discount_type'] ?? '') === 'fixed' ? 'selected' : '' }}>Rp</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Nilai Potongan</label>
+                        <input type="number" name="global_discount_value" value="{{ $setting['global_discount_value'] ?? 0 }}" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 text-lg font-black text-pink-700 focus:border-pink-500 outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full bg-pink-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-pink-700 transition-all">
+                        SIMPAN
+                    </button>
+                </div>
+            </form>
+        </div>
+
     <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-4">Informasi Pengaturan</h3>

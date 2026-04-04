@@ -3,8 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "build": "bunx vite build",
+        "dev": "bunx vite"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

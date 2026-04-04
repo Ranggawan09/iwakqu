@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\SocialAuthController;
 
 // ─── Public Routes ────────────────────────────────────────────────────────────
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -22,6 +23,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login',    [AuthController::class, 'login']);
     Route::get('/register',  [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+
+    // Google OAuth
+    Route::get('/auth/google',          [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
@@ -127,6 +132,9 @@ Route::middleware(['auth'])->group(function () {
             'is_out_of_range' => $isOutOfRange,
         ]);
     })->name('shipping.estimate');
+
+    // ── Voucher API ───────────────────────────────────────────────────────────
+    Route::post('/api/vouchers/apply', [\App\Http\Controllers\VoucherController::class, 'apply'])->name('vouchers.apply');
 });
 
 // ─── Admin Routes ─────────────────────────────────────────────────────────────
@@ -148,4 +156,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Settings (shipping config & operational hours)
     Route::get('/settings',  [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+    // Vouchers CRUD
+    Route::post('/vouchers',          [\App\Http\Controllers\Admin\VoucherController::class, 'store'])->name('vouchers.store');
+    Route::delete('/vouchers/{voucher}', [\App\Http\Controllers\Admin\VoucherController::class, 'destroy'])->name('vouchers.destroy');
+    Route::post('/vouchers/{voucher}/toggle', [\App\Http\Controllers\Admin\VoucherController::class, 'toggle'])->name('vouchers.toggle');
 });

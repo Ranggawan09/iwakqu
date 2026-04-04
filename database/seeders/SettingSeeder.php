@@ -16,6 +16,9 @@ class SettingSeeder extends Seeder
             'shipping_rate_per_km' => '2000',
             'min_distance_km' => '3',
             'max_distance_km' => '30',
+            'open_time' => '17:00',
+            'close_time' => '21:00',
+            'operational_days' => json_encode(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
         ];
 
         foreach ($settings as $key => $value) {
