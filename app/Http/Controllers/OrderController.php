@@ -285,6 +285,24 @@ class OrderController extends Controller
     }
 
     // =========================================================================
+    // Batalkan pesanan
+    // =========================================================================
+    public function cancel(Order $order)
+    {
+        if ($order->user_id != auth()->id()) {
+            abort(403);
+        }
+
+        if ($order->status !== 'menunggu_pembayaran') {
+            return back()->with('error', 'Hanya pesanan yang menunggu pembayaran yang dapat dibatalkan.');
+        }
+
+        $order->update(['status' => 'dibatalkan']);
+
+        return back()->with('success', 'Pesanan berhasil dibatalkan.');
+    }
+
+    // =========================================================================
     // Payment Return — redirect target dari Mayar setelah user selesai bayar
     // =========================================================================
     public function paymentReturn(Order $order)

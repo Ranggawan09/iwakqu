@@ -13,7 +13,9 @@
             @csrf @method('PUT')
             <select name="status" class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:border-green-500 outline-none font-medium text-gray-700 text-sm">
                 @foreach(['menunggu_pembayaran'=>'Menunggu Pembayaran','dibayar'=>'Dibayar','diproses'=>'Diproses','dikirim'=>'Sedang Dikirim','selesai'=>'Selesai','dibatalkan'=>'Dibatalkan'] as $val => $label)
-                <option value="{{ $val }}" {{ $order->status === $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @if($order->status === $val || in_array($val, ['diproses', 'dikirim', 'selesai', 'dibatalkan']))
+                        <option value="{{ $val }}" {{ $order->status === $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @endif
                 @endforeach
             </select>
             <button type="submit" class="bg-green-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-green-600 transition-all text-sm">

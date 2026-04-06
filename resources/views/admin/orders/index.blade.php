@@ -61,7 +61,9 @@
                     'selesai'             => 'Selesai',
                     'dibatalkan'          => 'Dibatalkan',
                 ] as $val => $lbl)
+                @if($order->status === $val || in_array($val, ['diproses', 'dikirim', 'selesai', 'dibatalkan']))
                 <option value="{{ $val }}" {{ $order->status === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                @endif
                 @endforeach
             </select>
         </form>
@@ -163,7 +165,9 @@
                                 'selesai'             => 'Selesai',
                                 'dibatalkan'          => 'Dibatalkan',
                             ] as $val => $lbl)
+                            @if($order->status === $val || in_array($val, ['diproses', 'dikirim', 'selesai', 'dibatalkan']))
                             <option value="{{ $val }}" {{ $order->status === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                            @endif
                             @endforeach
                         </select>
                     </form>

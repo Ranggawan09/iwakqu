@@ -6,7 +6,13 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 class="text-3xl font-black text-gray-900 mb-8">Checkout</h1>
 
-            <form action="{{ route('checkout.place') }}" method="POST"
+            {{-- Flash Alert (ditampilkan via JS) --}}
+            <div id="checkout-flash-alert" class="hidden mb-6 rounded-2xl p-4 flex items-start gap-3 shadow-md transition-all duration-300" role="alert">
+                <div id="flash-icon" class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-base font-black"></div>
+                <p id="flash-message" class="flex-1 text-sm font-semibold leading-snug"></p>
+                <button type="button" onclick="hideFlashAlert()" class="flex-shrink-0 ml-auto text-lg leading-none opacity-60 hover:opacity-100 transition-opacity">&times;</button>
+            </div>
+            <form id="checkout-form" action="{{ route('checkout.place') }}" method="POST"
                 class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
                 @csrf
 
@@ -81,18 +87,6 @@
                                 <div class="mb-3 rounded-2xl overflow-hidden border-2 border-gray-200 relative z-0"
                                     style="height: 260px;">
                                     <div id="checkout-map" style="height:100%; width:100%;"></div>
-                                    {{-- GPS button --}}
-                                    <button type="button" id="btn-my-location" title="Gunakan lokasi saya"
-                                        class="absolute bottom-3 right-3 z-[400] bg-white shadow-lg rounded-xl p-2.5 flex items-center gap-1.5 text-xs font-semibold text-green-700 border border-gray-200 hover:bg-green-50 transition-all">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        Lokasi Saya
-                                    </button>
                                 </div>
                                 <p class="text-xs text-gray-400 mb-2 flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-green-500 flex-shrink-0"
@@ -109,6 +103,19 @@
                                     value="{{ old('latitude', $lastOrder?->latitude) }}">
                                 <input type="hidden" name="longitude" id="input-lng"
                                     value="{{ old('longitude', $lastOrder?->longitude) }}">
+
+                                {{-- GPS Button --}}
+                                <button type="button" id="btn-my-location"
+                                    class="w-full mb-2 flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 active:scale-95 border-2 border-green-200 text-green-700 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    Gunakan Lokasi Saya
+                                </button>
 
                                 {{-- Address textarea --}}
                                 <textarea name="address" id="address-textarea" required rows="3"
@@ -168,12 +175,12 @@
                         {{-- Voucher Input --}}
                         <div class="mt-6 border-t border-gray-100 pt-6">
                             <label class="block text-xs font-black text-gray-400 uppercase mb-2">Punya Kode Voucher?</label>
-                            <div class="flex gap-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <input type="text" id="voucher-input" name="voucher_code"
-                                    class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2 text-sm font-bold focus:border-green-500 outline-none uppercase placeholder:normal-case"
-                                    placeholder="Masukkan kode...">
+                                    class="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold focus:border-green-500 outline-none uppercase placeholder:normal-case"
+                                    placeholder="Masukkan kode voucher...">
                                 <button type="button" id="btn-apply-voucher"
-                                    class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-200 transition-all">
+                                    class="w-full sm:w-auto bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-green-600 active:scale-95 transition-all">
                                     Pakai
                                 </button>
                             </div>
@@ -524,29 +531,83 @@
                 this.dataset.manualEdit = '1';
             });
 
-            document.querySelector('form').addEventListener('submit', function (e) {
+            // ── Flash Alert Helpers ──────────────────────────────────────────
+            window.hideFlashAlert = function () {
+                var el = document.getElementById('checkout-flash-alert');
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-8px)';
+                setTimeout(function () { el.classList.add('hidden'); el.style.opacity = ''; el.style.transform = ''; }, 300);
+            };
+
+            window.showFlashAlert = function (msg, type) {
+                // type: 'error' | 'warning' | 'info'
+                var el      = document.getElementById('checkout-flash-alert');
+                var iconEl  = document.getElementById('flash-icon');
+                var msgEl   = document.getElementById('flash-message');
+                var configs = {
+                    error:   { bg: 'bg-red-50',    border: 'border-2 border-red-200',   textColor: 'text-red-800',    iconBg: 'bg-red-500',    icon: '✕' },
+                    warning: { bg: 'bg-amber-50',  border: 'border-2 border-amber-200', textColor: 'text-amber-900',  iconBg: 'bg-amber-400',  icon: '!' },
+                    info:    { bg: 'bg-blue-50',   border: 'border-2 border-blue-200',  textColor: 'text-blue-800',   iconBg: 'bg-blue-500',   icon: 'i' },
+                };
+                var cfg = configs[type] || configs.info;
+
+                // Reset classes
+                el.className = 'mb-6 rounded-2xl p-4 flex items-start gap-3 shadow-md transition-all duration-300 ' + cfg.bg + ' ' + cfg.border + ' ' + cfg.textColor;
+                iconEl.className = 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-black ' + cfg.iconBg;
+                iconEl.textContent = cfg.icon;
+                msgEl.textContent  = msg;
+
+                el.style.opacity   = '0';
+                el.style.transform = 'translateY(-8px)';
+                el.classList.remove('hidden');
+
+                // Animate in
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        el.style.opacity   = '1';
+                        el.style.transform = 'translateY(0)';
+                    });
+                });
+
+                // Auto dismiss after 5s
+                clearTimeout(el._dismissTimer);
+                el._dismissTimer = setTimeout(hideFlashAlert, 5000);
+
+                // Scroll ke alert
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+
+            document.getElementById('checkout-form').addEventListener('submit', function (e) {
                 var lat = document.getElementById('input-lat').value;
                 var lng = document.getElementById('input-lng').value;
                 if (!lat || !lng) {
                     e.preventDefault();
-                    alert('Silakan pilih lokasi pengiriman (pin merah pada peta) terlebih dahulu agar pesanan dapat diproses.');
+                    showFlashAlert('📍 Silakan pilih lokasi pengiriman terlebih dahulu — seret pin merah pada peta ke lokasi Anda.', 'error');
+                    // Highlight map border
+                    var mapWrap = document.getElementById('checkout-map').parentElement;
+                    mapWrap.classList.add('border-red-400');
+                    mapWrap.classList.remove('border-gray-200');
+                    setTimeout(function () {
+                        mapWrap.classList.remove('border-red-400');
+                        mapWrap.classList.add('border-gray-200');
+                    }, 3000);
                     document.getElementById('checkout-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
-                var panel = document.getElementById('shipping-estimate-panel');
+                var panel    = document.getElementById('shipping-estimate-panel');
                 var orderBtn = document.querySelector('button[type="submit"]');
                 if (!panel.classList.contains('hidden')) {
                     if (orderBtn.disabled) {
                         e.preventDefault();
-                        alert('Pesanan tidak dapat diproses karena lokasi di luar jangkauan pengiriman.');
+                        showFlashAlert('🚫 Pesanan tidak dapat diproses karena lokasi Anda di luar jangkauan pengiriman.', 'error');
                         return;
                     }
                 } else {
-                    if (lat && lng) {
-                        e.preventDefault();
-                        alert('Mohon tunggu sebentar, sedang menghitung ongkos kirim ke lokasi Anda.');
-                        return;
-                    }
+                    // Panel ongkir hidden = estimasi belum tampil, blok submit
+                    e.preventDefault();
+                    showFlashAlert('⏳ Mohon tunggu sebentar, estimasi ongkos kirim sedang dihitung. Coba geser pin lokasi Anda jika tidak ada respon.', 'warning');
+                    document.getElementById('checkout-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
                 }
             });
         })();

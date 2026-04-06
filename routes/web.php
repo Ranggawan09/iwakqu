@@ -72,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders',                 [OrderController::class, 'history'])->name('orders.index');
     Route::get('/orders/{order}',         [OrderController::class, 'show'])->name('orders.show');
     Route::post('/orders/{order}/rating', [OrderController::class, 'storeRating'])->name('orders.rating');
+    Route::put('/orders/{order}/cancel',  [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::get('/orders/{order}/pay',     [OrderController::class, 'retryPayment'])->name('orders.pay');
 
     // ── Shipping Estimate API (dipanggil JS checkout) ─────────────────────────

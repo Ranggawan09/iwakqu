@@ -25,7 +25,8 @@
             <!-- Cart Items -->
             <div class="lg:col-span-2 space-y-4">
                 @foreach($carts as $cart)
-                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 relative">
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 relative"
+                     data-cart-id="{{ $cart->id }}">
                     <div class="flex items-center gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
                         <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}"
                              class="w-20 h-20 object-cover rounded-xl flex-shrink-0"
@@ -35,23 +36,34 @@
                             <p class="text-green-700 font-semibold">{{ $cart->product->formatted_price }}</p>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 px-1 sm:px-0">
                         <div class="flex items-center">
-                            <form action="{{ route('cart.update', $cart) }}" method="POST" class="flex items-center gap-1">
+                            {{-- Form tetap ada sebagai fallback non-JS --}}
+                            <form action="{{ route('cart.update', $cart) }}" method="POST"
+                                  class="flex items-center gap-1 cart-update-form"
+                                  data-cart-id="{{ $cart->id }}"
+                                  data-price="{{ $cart->product->price }}"
+                                  data-update-url="{{ route('cart.update', $cart) }}">
                                 @csrf @method('PUT')
-                                <button type="button" onclick="changeQty(this, -1)" class="w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 transition-colors">-</button>
-                                <input type="number" name="quantity" value="{{ $cart->quantity }}" min="1" max="{{ $cart->product->stock }}"
-                                       class="w-14 text-center border border-gray-200 rounded-lg py-1 text-sm font-bold focus:ring-2 focus:ring-green-500"
-                                       onchange="this.form.submit()">
-                                <button type="button" onclick="changeQty(this, 1)" class="w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 transition-colors">+</button>
+                                <button type="button"
+                                        class="btn-qty w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 active:scale-90 transition-all"
+                                        data-delta="-1">−</button>
+                                <input type="number" name="quantity" value="{{ $cart->quantity }}"
+                                       min="1" max="{{ $cart->product->stock }}"
+                                       class="qty-input w-14 text-center border border-gray-200 rounded-lg py-1 text-sm font-bold focus:ring-2 focus:ring-green-500 transition-all">
+                                <button type="button"
+                                        class="btn-qty w-8 h-8 bg-gray-100 rounded-lg text-gray-700 font-bold hover:bg-gray-200 active:scale-90 transition-all"
+                                        data-delta="1">+</button>
                             </form>
                         </div>
                         <div class="text-right min-w-0 sm:ml-4">
-                            <p class="font-black text-gray-900 text-base">{{ $cart->formatted_subtotal }}</p>
+                            <p class="item-subtotal font-black text-gray-900 text-base transition-all"
+                               data-cart-id="{{ $cart->id }}">{{ $cart->formatted_subtotal }}</p>
                         </div>
                     </div>
 
+                    {{-- Tombol hapus --}}
                     <form action="{{ route('cart.remove', $cart) }}" method="POST" class="absolute top-4 right-4 sm:static sm:top-auto sm:right-auto">
                         @csrf @method('DELETE')
                         <button type="submit" class="text-red-400 hover:text-red-500 transition-colors p-1" title="Hapus">
@@ -60,6 +72,10 @@
                             </svg>
                         </button>
                     </form>
+
+                    {{-- Toast error per item --}}
+                    <div class="item-error hidden absolute bottom-2 left-4 right-4 text-xs text-red-600 font-bold bg-red-50 border border-red-200 rounded-lg px-3 py-1.5"
+                         data-cart-id="{{ $cart->id }}"></div>
                 </div>
                 @endforeach
 
@@ -76,18 +92,18 @@
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 sticky top-24">
                     <h3 class="font-bold text-gray-900 text-lg mb-4">Ringkasan Pesanan</h3>
-                    <div class="space-y-3 mb-4">
+                    <div class="space-y-3 mb-4" id="summary-list">
                         @foreach($carts as $cart)
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500 truncate pr-2">{{ $cart->product->name }} x{{ $cart->quantity }}</span>
-                            <span class="font-medium text-gray-900 whitespace-nowrap">{{ $cart->formatted_subtotal }}</span>
+                        <div class="flex justify-between text-sm" data-summary-cart-id="{{ $cart->id }}">
+                            <span class="summary-name text-gray-500 truncate pr-2">{{ $cart->product->name }} x<span class="summary-qty">{{ $cart->quantity }}</span></span>
+                            <span class="summary-subtotal font-medium text-gray-900 whitespace-nowrap">{{ $cart->formatted_subtotal }}</span>
                         </div>
                         @endforeach
                     </div>
                     <div class="border-t border-gray-100 pt-4 mb-6">
                         <div class="flex justify-between">
                             <span class="font-black text-gray-900">Total</span>
-                            <span class="font-black text-green-700 text-xl">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                            <span class="font-black text-green-700 text-xl" id="grand-total">Rp {{ number_format($total, 0, ',', '.') }}</span>
                         </div>
                     </div>
                     <a href="{{ route('checkout.index') }}"
@@ -104,18 +120,142 @@
         @endif
     </div>
 </div>
+
+<style>
+@keyframes flash-green {
+    0%   { color: #15803d; transform: scale(1.08); }
+    100% { color: inherit; transform: scale(1); }
+}
+.flash-update { animation: flash-green 0.4s ease-out; }
+
+@keyframes spin-once {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+.qty-loading { opacity: 0.5; pointer-events: none; }
+</style>
 @endsection
 
 @push('scripts')
 <script>
-function changeQty(btn, delta) {
-    const input = btn.parentElement.querySelector('input[name="quantity"]');
-    const max = parseInt(input.getAttribute('max'));
-    let newVal = parseInt(input.value) + delta;
-    if (newVal < 1) newVal = 1;
-    if (newVal > max) newVal = max;
-    input.value = newVal;
-    input.form.submit();
-}
+(function () {
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content
+        ?? '{{ csrf_token() }}';
+
+    function formatRupiah(amount) {
+        return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
+    }
+
+    function flashEl(el) {
+        el.classList.remove('flash-update');
+        void el.offsetWidth; // reflow
+        el.classList.add('flash-update');
+        setTimeout(() => el.classList.remove('flash-update'), 450);
+    }
+
+    function showItemError(cartId, msg) {
+        const err = document.querySelector(`.item-error[data-cart-id="${cartId}"]`);
+        if (!err) return;
+        err.textContent = msg;
+        err.classList.remove('hidden');
+        setTimeout(() => err.classList.add('hidden'), 3000);
+    }
+
+    function updateCartItem(form, newQty) {
+        const cartId = form.dataset.cartId;
+        const url    = form.dataset.updateUrl;
+
+        // Kunci UI sementara
+        const card = form.closest('[data-cart-id]');
+        card.classList.add('qty-loading');
+
+        const body = new FormData();
+        body.append('_method', 'PUT');
+        body.append('_token', CSRF);
+        body.append('quantity', newQty);
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
+            body: body,
+        })
+        .then(r => r.json())
+        .then(data => {
+            card.classList.remove('qty-loading');
+
+            if (!data.success) {
+                showItemError(cartId, data.message ?? 'Terjadi kesalahan.');
+                // Kembalikan nilai input ke server value (ambil dari form tersimpan)
+                form.querySelector('.qty-input').value = form.querySelector('.qty-input').dataset.lastValid ?? 1;
+                return;
+            }
+
+            // Simpan nilai valid terakhir
+            form.querySelector('.qty-input').dataset.lastValid = newQty;
+
+            // Update subtotal item (kanan card)
+            const subtotalEl = document.querySelector(`.item-subtotal[data-cart-id="${cartId}"]`);
+            if (subtotalEl) {
+                subtotalEl.textContent = data.subtotal_fmt;
+                flashEl(subtotalEl);
+            }
+
+            // Update ringkasan sidebar
+            const summaryRow = document.querySelector(`[data-summary-cart-id="${cartId}"]`);
+            if (summaryRow) {
+                summaryRow.querySelector('.summary-qty').textContent = newQty;
+                const sumSub = summaryRow.querySelector('.summary-subtotal');
+                if (sumSub) { sumSub.textContent = data.subtotal_fmt; flashEl(sumSub); }
+            }
+
+            // Update grand total
+            const grandTotalEl = document.getElementById('grand-total');
+            if (grandTotalEl) {
+                grandTotalEl.textContent = data.grand_total_fmt;
+                flashEl(grandTotalEl);
+            }
+        })
+        .catch(() => {
+            card.classList.remove('qty-loading');
+            showItemError(cartId, 'Gagal terhubung ke server.');
+        });
+    }
+
+    // Debounce untuk input manual ketik angka
+    const debounceTimers = {};
+
+    document.querySelectorAll('.cart-update-form').forEach(form => {
+        const input   = form.querySelector('.qty-input');
+        const cartId  = form.dataset.cartId;
+        input.dataset.lastValid = input.value;
+
+        // Tombol + / –
+        form.querySelectorAll('.btn-qty').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const delta  = parseInt(btn.dataset.delta);
+                const max    = parseInt(input.getAttribute('max'));
+                let newVal   = parseInt(input.value) + delta;
+                if (newVal < 1)   newVal = 1;
+                if (newVal > max) newVal = max;
+                if (newVal === parseInt(input.value)) return; // tidak berubah
+                input.value = newVal;
+                updateCartItem(form, newVal);
+            });
+        });
+
+        // Input angka manual — debounce 600ms
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimers[cartId]);
+            debounceTimers[cartId] = setTimeout(() => {
+                const max   = parseInt(input.getAttribute('max'));
+                let newVal  = parseInt(input.value);
+                if (!newVal || newVal < 1) { input.value = 1; newVal = 1; }
+                if (newVal > max)          { input.value = max; newVal = max; }
+                if (newVal === parseInt(input.dataset.lastValid)) return;
+                updateCartItem(form, newVal);
+            }, 600);
+        });
+    });
+})();
 </script>
 @endpush

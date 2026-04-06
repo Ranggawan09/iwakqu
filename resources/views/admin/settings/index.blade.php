@@ -3,10 +3,10 @@
 @section('page-title', 'Pengaturan')
 
 @section('content')
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
     {{-- ── Left Column: Shipping & Location ────────────────────────── --}}
-    <div class="lg:col-span-2 space-y-6">
+    <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="bg-gradient-to-r from-green-700 to-green-600 px-6 py-4 flex items-center justify-between">
                 <div>
@@ -163,12 +163,13 @@
                 </div>
             </form>
         </div>
+    </div> <!-- End of Left Column -->
 
-
+    {{-- ── Right Column: Vouchers & Discounts ───────────────── --}}
     <div class="space-y-6">
         {{-- Manajemen Voucher --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-indigo-700 to-green-700 px-6 py-4 flex items-center justify-between">
+            <div class="bg-blue-500 px-6 py-4 flex items-center justify-between">
                 <div>
                     <h2 class="font-bold text-white flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12.75 3.75a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5ZM7.5 5.25a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H7.5ZM16.5 5.25a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM5.25 7.5a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V7.5ZM18.75 7.5a.75.75 0 0 0 1.5 0v1.5a.75.75 0 0 0-1.5 0V7.5ZM3.75 12.75a.75.75 0 1 1 0-1.5 1.5 1.5 0 0 1 1.5 1.5h-1.5ZM18.75 12.75a1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 0 3h-1.5a1.5 1.5 0 0 1-1.5-1.5h1.5ZM4.5 15.75a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5ZM15.75 18.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM11.25 18.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM7.5 18.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H7.5ZM15.75 4.5a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0V4.5ZM15.75 4.5v1.5M10.5 8.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5Z" /></svg>
@@ -227,6 +228,7 @@
                         <thead>
                             <tr class="border-b border-gray-100">
                                 <th class="pb-3 text-[10px] font-black text-gray-400 uppercase">Voucher</th>
+                                <th class="pb-3 text-[10px] font-black text-gray-400 uppercase text-center">Penggunaan</th>
                                 <th class="pb-3 text-[10px] font-black text-gray-400 uppercase text-center">Status</th>
                                 <th class="pb-3 text-[10px] font-black text-gray-400 uppercase text-right">Aksi</th>
                             </tr>
@@ -242,6 +244,11 @@
                                             ({{ $v->target === 'subtotal' ? 'Prd' : 'Ong' }})
                                         </span>
                                     </div>
+                                </td>
+                                <td class="py-3 text-center">
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full {{ $v->is_single_use ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-gray-50 text-gray-500 border border-gray-100' }}">
+                                        {{ $v->is_single_use ? '1x Pakai' : 'Bebas' }}
+                                    </span>
                                 </td>
                                 <td class="py-3 text-center">
                                     <form action="{{ route('admin.vouchers.toggle', $v->id) }}" method="POST">
@@ -265,7 +272,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="py-4 text-center text-[10px] text-gray-400 italic">Kosong</td>
+                                <td colspan="4" class="py-4 text-center text-[10px] text-gray-400 italic">Kosong</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -276,7 +283,7 @@
 
         {{-- Diskon Global --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-pink-700 to-pink-600 px-6 py-4 flex items-center justify-between">
+            <div class="bg-amber-500 px-6 py-4 flex items-center justify-between">
                 <div>
                     <h2 class="font-bold text-white flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z"/><path d="M12 7a1 1 0 0 0-1 1v2.58l-1.29 1.3a1 1 0 0 0 1.42 1.42l2-2A1 1 0 0 0 13 10V8a1 1 0 0 0-1-1Z"/></svg>
@@ -337,7 +344,8 @@
             </form>
         </div>
 
-    <div class="space-y-6">
+    {{-- ── Bottom Row: System Info & Help ────────────────────────────── --}}
+    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-4">Informasi Pengaturan</h3>
             <div class="space-y-4">

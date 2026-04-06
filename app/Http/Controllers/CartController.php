@@ -42,8 +42,7 @@ class CartController extends Controller
                 return back()->with('error', 'Stok tidak mencukupi!');
             }
             $cart->update(['quantity' => $newQty]);
-        }
-        else {
+        } else {
             Cart::create([
                 'user_id' => auth()->id(),
                 'product_id' => $request->product_id,
@@ -61,19 +60,39 @@ class CartController extends Controller
 
     public function update(Request $request, Cart $cart)
     {
-        if ($cart->user_id !== auth()->id()) {
+        if ($cart->user_id != auth()->id()) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
             abort(403);
         }
 
         $request->validate(['quantity' => 'required|integer|min:1']);
 
         if ($cart->product->stock < $request->quantity) {
-            return back()->with('error', 'Stok tidak mencukupi!');
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi!']);
+            }
+            return redirect()->route('cart.index')->with('error', 'Stok tidak mencukupi!');
         }
 
         $cart->update(['quantity' => $request->quantity]);
 
-        return back()->with('success', 'Jumlah berhasil diperbarui.');
+        if ($request->ajax()) {
+            // Hitung ulang grand total semua cart user
+            $carts     = Cart::with('product')->where('user_id', auth()->id())->get();
+            $grandTotal = $carts->sum(fn($c) => $c->subtotal);
+
+            return response()->json([
+                'success'   => true,
+                'subtotal'  => $cart->fresh()->subtotal,
+                'subtotal_fmt' => $cart->fresh()->formatted_subtotal,
+                'grand_total'  => $grandTotal,
+                'grand_total_fmt' => 'Rp ' . number_format($grandTotal, 0, ',', '.'),
+            ]);
+        }
+
+        return redirect()->route('cart.index')->with('success', 'Jumlah berhasil diperbarui.');
     }
 
     public function remove(Cart $cart)
@@ -84,12 +103,12 @@ class CartController extends Controller
 
         $cart->delete();
 
-        return back()->with('success', 'Produk dihapus dari keranjang.');
+        return redirect()->route('cart.index')->with('success', 'Produk dihapus dari keranjang.');
     }
 
     public function clear()
     {
         Cart::where('user_id', auth()->id())->delete();
-        return back()->with('success', 'Keranjang berhasil dikosongkan.');
+        return redirect()->route('cart.index')->with('success', 'Keranjang berhasil dikosongkan.');
     }
 }

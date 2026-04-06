@@ -124,6 +124,16 @@
                         </button>
                         @endif
 
+                        {{-- Tombol Batalkan Pesanan --}}
+                        @if($order->status === 'menunggu_pembayaran')
+                        <form action="{{ route('orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">
+                            @csrf @method('PUT')
+                            <button type="submit" class="text-red-500 font-semibold text-sm hover:text-red-600 transition-colors mr-2">
+                                Batalkan Pesanan
+                            </button>
+                        </form>
+                        @endif
+
                         <a href="{{ route('orders.show', $order) }}"
                            class="text-green-700 font-semibold text-sm hover:text-green-500 flex items-center gap-1">
                             Lihat Detail
