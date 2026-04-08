@@ -16,16 +16,35 @@
                     <div class="flex items-center justify-between mb-2">
                         <h2 class="font-black text-xl text-gray-900">Order #{{ $order->id }}</h2>
                         <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold
-                            @if($order->status === 'selesai') bg-green-100 text-green-700
-                            @elseif($order->status === 'dibayar') bg-blue-100 text-blue-700
-                            @elseif($order->status === 'diproses') bg-indigo-100 text-indigo-700
-                            @elseif($order->status === 'dikirim') bg-orange-100 text-orange-700
-                            @elseif($order->status === 'dibatalkan') bg-red-100 text-red-700
-                            @else bg-yellow-100 text-yellow-700 @endif">
+                                @if($order->status === 'selesai') bg-green-100 text-green-700
+                                @elseif($order->status === 'dibayar') bg-blue-100 text-blue-700
+                                @elseif($order->status === 'diproses') bg-indigo-100 text-indigo-700
+                                @elseif($order->status === 'dikirim') bg-orange-100 text-orange-700
+                                @elseif($order->status === 'dibatalkan') bg-red-100 text-red-700
+                                @else bg-yellow-100 text-yellow-700 @endif">
                             {{ $order->status_label }}
                         </span>
                     </div>
-                    <p class="text-gray-400 text-sm mb-4">{{ $order->created_at->format('d F Y, H:i') }}</p>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="text-gray-400 text-sm">{{ $order->created_at->format('d F Y, H:i') }}</p>
+
+                        @if(in_array($order->status, ['diproses', 'dikirim']))
+                            @php
+                                $distance = $order->distance_km ?? 0;
+                                $duration = ($order->status === 'diproses') ? (15 + (4 * $distance)) : (4 * $distance);
+                                $eta = $order->updated_at->addMinutes($duration);
+                            @endphp
+                            <p class="text-gray-400 text-sm flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Estimasi sampai: {{ $eta->format('H:i') }}
+                            </p>
+                        @endif
+                    </div>
 
                     {{-- Tombol lanjutkan pembayaran --}}
                     @if($order->status === 'menunggu_pembayaran' && $order->payment_link)
@@ -91,7 +110,8 @@
                                 <div class="flex-1">
                                     <p class="font-semibold text-gray-900">{{ $item->product->name }}</p>
                                     <p class="text-gray-400 text-sm">Rp {{ number_format($item->price, 0, ',', '.') }} ×
-                                        {{ $item->quantity }}</p>
+                                        {{ $item->quantity }}
+                                    </p>
                                 </div>
                                 <p class="font-bold text-gray-900">{{ $item->formatted_subtotal }}</p>
                             </div>
@@ -120,7 +140,7 @@
 
                         {{-- Global Discount --}}
                         @if(($order->global_discount_amount ?? 0) > 0)
-                            <div class="flex justify-between text-sm text-pink-600">
+                            <div class="flex justify-between text-sm text-green-600">
                                 <span>Diskon Toko (Otomatis)</span>
                                 <span class="font-semibold">-Rp
                                     {{ number_format($order->global_discount_amount, 0, ',', '.') }}</span>
@@ -166,18 +186,18 @@
                         @endif
 
                         <!-- @if($order->transaction_id)
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">ID Transaksi</span>
-                            <span class="font-mono font-semibold">{{ $order->transaction_id }}</span>
-                        </div>
-                        @endif
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">ID Transaksi</span>
+                                <span class="font-mono font-semibold">{{ $order->transaction_id }}</span>
+                            </div>
+                            @endif
 
-                        @if($order->payment_method)
-                        <div class="flex justify-between">
-                            <span class="text-gray-400">Metode Pembayaran</span>
-                            <span class="font-semibold">{{ $order->payment_method }}</span>
-                        </div>
-                        @endif -->
+                            @if($order->payment_method)
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Metode Pembayaran</span>
+                                <span class="font-semibold">{{ $order->payment_method }}</span>
+                            </div>
+                            @endif -->
 
                         @if($order->status === 'menunggu_pembayaran')
                             <div class="pt-2">
