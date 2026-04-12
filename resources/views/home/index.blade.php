@@ -212,6 +212,80 @@
     </div>
 </section>
 
+<!-- Sertifikasi & Legalitas Section -->
+<section id="sertifikasi" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+            <span class="inline-block bg-yellow-100 text-yellow-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-3">Terjamin & Terpercaya</span>
+            <h2 class="text-4xl font-black text-gray-900 mb-4">Legalitas & <span class="text-green-700">Sertifikasi</span></h2>
+            <p class="text-gray-500 max-w-xl mx-auto">Komitmen kami untuk memberikan produk yang aman, higienis, dan terjamin kualitasnya melalui izin resmi dan sertifikasi halal.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- NIB -->
+            <div class="group relative bg-white p-4 rounded-3xl shadow-xl border border-gray-100 overflow-hidden cursor-pointer transform transition-all duration-500 hover:-translate-y-2" onclick="openCertModal('{{ asset('images/certificates/nib.webp') }}', 'Surat Izin Usaha (NIB)')">
+                <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100">
+                    <img src="{{ asset('images/certificates/nib.webp') }}" alt="Surat Izin Usaha (NIB)" 
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                         onerror="this.src='https://placehold.co/600x800?text=NIB+Belum+Diunggah'; this.onerror=null;">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div class="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 7v6m4-3H10" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <h3 class="text-xl font-black text-gray-900">Surat Izin Usaha</h3>
+                    <p class="text-green-600 text-sm font-semibold">Nomor Induk Berusaha (NIB)</p>
+                </div>
+            </div>
+
+            <!-- HALAL -->
+            <div class="group relative bg-white p-4 rounded-3xl shadow-xl border border-gray-100 overflow-hidden cursor-pointer transform transition-all duration-500 hover:-translate-y-2" onclick="openCertModal('{{ asset('images/certificates/halal.webp') }}', 'Sertifikat Halal')">
+                <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100">
+                    <img src="{{ asset('images/certificates/halal.webp') }}" alt="Sertifikat Halal" 
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                         onerror="this.src='https://placehold.co/600x800?text=Sertifikat+Halal+Belum+Diunggah'; this.onerror=null;">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div class="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 7v6m4-3H10" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <h3 class="text-xl font-black text-gray-900">Sertifikat Halal</h3>
+                    <p class="text-green-600 text-sm font-semibold">BPJPH Indonesia</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Certificate Modal -->
+<div id="cert-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/90 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="relative max-w-4xl w-full h-fit my-auto outline-none">
+        <button onclick="closeCertModal()" class="fixed top-6 right-6 text-white hover:text-yellow-400 transition-colors z-[110] bg-black/50 p-2 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        <div class="bg-white rounded-3xl overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300" id="cert-modal-content">
+            <div class="p-2">
+                <img id="cert-modal-img" src="" alt="" class="w-full h-auto rounded-2xl max-h-[85vh] object-contain mx-auto">
+            </div>
+            <div class="bg-white px-8 py-4 text-center border-t border-gray-100">
+                <h3 id="cert-modal-title" class="text-2xl font-black text-gray-900"></h3>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Testimoni Section -->
 <section class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -379,6 +453,54 @@
     pwaPopup.addEventListener('click', (e) => {
         if (e.target === pwaPopup) {
             closePwaPopup();
+        }
+    });
+
+    // Certificate Modal Logic
+    const certModal = document.getElementById('cert-modal');
+    const certModalContent = document.getElementById('cert-modal-content');
+    const certModalImg = document.getElementById('cert-modal-img');
+    const certModalTitle = document.getElementById('cert-modal-title');
+
+    function openCertModal(imgSrc, title) {
+        certModalImg.src = imgSrc;
+        certModalTitle.innerText = title;
+        certModal.classList.remove('hidden');
+        certModal.classList.add('flex');
+        
+        // Prevent scrolling on body
+        document.body.style.overflow = 'hidden';
+
+        requestAnimationFrame(() => {
+            certModalContent.classList.remove('scale-95', 'opacity-0');
+            certModalContent.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    function closeCertModal() {
+        certModalContent.classList.remove('scale-100', 'opacity-100');
+        certModalContent.classList.add('scale-95', 'opacity-0');
+        
+        // Re-enable scrolling
+        document.body.style.overflow = 'auto';
+
+        setTimeout(() => {
+            certModal.classList.add('hidden');
+            certModal.classList.remove('flex');
+        }, 300);
+    }
+
+    // Close on click outside content
+    certModal.addEventListener('click', (e) => {
+        if (e.target === certModal) {
+            closeCertModal();
+        }
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !certModal.classList.contains('hidden')) {
+            closeCertModal();
         }
     });
 </script>

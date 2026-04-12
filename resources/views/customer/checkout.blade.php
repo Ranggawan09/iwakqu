@@ -345,10 +345,10 @@
 
             var globalDiscount = {
                 active: {{ $globalDiscount['active'] ? 'true' : 'false' }},
-                type: '{{ $globalDiscount['type'] }}',
-                target: '{{ $globalDiscount['target'] }}',
-                value: {{ $globalDiscount['value'] }}
-                            };
+                type: '{{ $globalDiscount["type"] }}',
+                target: '{{ $globalDiscount["target"] }}',
+                value: {{ $globalDiscount["value"] }},
+            };
 
             function recalculateTotal() {
                 var globalDiscAmount = 0;
