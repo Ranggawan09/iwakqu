@@ -27,6 +27,16 @@ class OrderController extends Controller
                 ->with('error', 'Keranjang belanja Anda kosong.');
         }
 
+        // Validasi stok sebelum lanjut checkout
+        $hasInvalidStock = $carts->contains(function ($cart) {
+            return $cart->quantity > $cart->product->stock;
+        });
+
+        if ($hasInvalidStock) {
+            return redirect()->route('cart.index')
+                ->with('error', 'Sebagian stok produk dalam keranjang Anda tidak mencukupi atau telah habis. Mohon sesuaikan jumlah pesanan Anda.');
+        }
+
         $total = $carts->sum(fn($c) => $c->subtotal);
 
         // Ambil order terakhir untuk auto-fill nama, HP, alamat, dan koordinat
@@ -91,6 +101,14 @@ class OrderController extends Controller
         if ($carts->isEmpty()) {
             return redirect()->route('cart.index')
                 ->with('error', 'Keranjang belanja Anda kosong.');
+        }
+
+        // Validasi stok ulang sebelum simpan order
+        foreach ($carts as $cart) {
+            if ($cart->quantity > $cart->product->stock) {
+                return redirect()->route('cart.index')
+                    ->with('error', 'Stok produk ' . $cart->product->name . ' tidak mencukupi.');
+            }
         }
 
         $subtotal = $carts->sum(fn($c) => $c->subtotal);

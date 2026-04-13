@@ -21,19 +21,45 @@
             </a>
         </div>
         @else
+        @php
+            $hasInvalidStock = $carts->contains(function ($cart) {
+                return $cart->quantity > $cart->product->stock;
+            });
+        @endphp
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Cart Items -->
             <div class="lg:col-span-2 space-y-4">
                 @foreach($carts as $cart)
-                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 relative"
+                @php
+                    $isItemOutOfStock = $cart->product->stock <= 0;
+                    $isItemInsufficient = $cart->quantity > $cart->product->stock;
+                @endphp
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 relative {{ $isItemInsufficient ? 'opacity-75 bg-red-50/30' : '' }}"
                      data-cart-id="{{ $cart->id }}">
                     <div class="flex items-center gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
-                        <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}"
-                             class="w-20 h-20 object-cover rounded-xl flex-shrink-0"
-                             onerror="this.src='https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80'; this.onerror=null;">
+                        <div class="relative flex-shrink-0">
+                            <img src="{{ $cart->product->image_url }}" alt="{{ $cart->product->name }}"
+                                 class="w-20 h-20 object-cover rounded-xl {{ $isItemOutOfStock ? 'grayscale' : '' }}"
+                                 onerror="this.src='https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80'; this.onerror=null;">
+                            @if($isItemOutOfStock)
+                                <div class="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
+                                    <span class="text-[10px] font-bold text-white uppercase tracking-wider">Habis</span>
+                                </div>
+                            @endif
+                        </div>
                         <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-gray-900 truncate pr-8 sm:pr-0">{{ $cart->product->name }}</h3>
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <h3 class="font-bold text-gray-900 truncate">{{ $cart->product->name }}</h3>
+                                @if($isItemOutOfStock)
+                                    <span class="bg-red-100 text-red-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Stok Habis</span>
+                                @elseif($isItemInsufficient)
+                                    <span class="bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Stok Tidak Cukup</span>
+                                @endif
+                            </div>
                             <p class="text-green-700 font-semibold">{{ $cart->product->formatted_price }}</p>
+                            @if($isItemInsufficient && !$isItemOutOfStock)
+                                <p class="text-[10px] text-orange-600 font-medium">Tersedia: {{ $cart->product->stock }}</p>
+                            @endif
                         </div>
                     </div>
 
@@ -106,10 +132,25 @@
                             <span class="font-black text-green-700 text-xl" id="grand-total">Rp {{ number_format($total, 0, ',', '.') }}</span>
                         </div>
                     </div>
-                    <a href="{{ route('checkout.index') }}"
-                       class="block text-center bg-green-700 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-green-600 btn-glow transition-all">
-                        Lanjut Checkout →
-                    </a>
+                    @if($hasInvalidStock)
+                        <div class="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl">
+                            <p class="text-xs text-red-600 font-bold flex items-center gap-2 border-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                                Sebagian stok produk tidak mencukupi atau habis.
+                            </p>
+                        </div>
+                        <button disabled
+                           class="w-full block text-center bg-gray-200 text-gray-400 py-3.5 rounded-xl font-bold text-lg cursor-not-allowed">
+                            Lanjut Checkout
+                        </button>
+                    @else
+                        <a href="{{ route('checkout.index') }}"
+                           class="block text-center bg-green-700 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-green-600 btn-glow transition-all">
+                            Lanjut Checkout →
+                        </a>
+                    @endif
                     <a href="{{ route('home') }}#produk"
                        class="block text-center text-gray-500 text-sm mt-3 hover:text-gray-700">
                         ← Lanjut Belanja
