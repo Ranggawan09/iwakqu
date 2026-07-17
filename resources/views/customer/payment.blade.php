@@ -31,15 +31,30 @@
                 </div>
             </div>
 
-            @if(isset($paymentLink) && $paymentLink)
-            <a href="{{ $paymentLink }}" id="pay-button" target="_blank" rel="noopener"
-                    class="block w-full bg-green-700 text-white py-4 rounded-2xl font-black text-xl btn-glow hover:bg-green-600 transition-all shadow-lg mb-4">
-                Bayar Sekarang
-            </a>
-            <p class="text-xs text-gray-400 mb-4">Klik tombol di atas untuk membuka halaman pembayaran Mayar</p>
+            @if($order->qris_string)
+            <div class="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-3xl border border-gray-100 mb-6">
+                <div class="relative p-3 bg-white rounded-2xl shadow-sm mb-4">
+                    <!-- ShopeePay & QRIS header logo -->
+                    <div class="flex justify-between items-center mb-2 px-2">
+                        <span class="text-xs font-bold text-gray-400">QRIS DYNAMIC</span>
+                        <img src="https://gokepo.com/wp-content/uploads/2020/09/Logo-ShopeePay.png" alt="ShopeePay" class="h-5 object-contain">
+                    </div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($order->qris_string) }}" 
+                         alt="QRIS ShopeePay" 
+                         class="w-60 h-60 rounded-xl">
+                </div>
+                
+                <div class="text-center">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 mb-2">
+                        Scan dengan ShopeePay atau E-Wallet Lain
+                    </span>
+                    <div class="text-xs text-gray-400 mb-1">Batas Waktu Pembayaran:</div>
+                    <div id="countdown" class="text-2xl font-black text-red-600">20:00</div>
+                </div>
+            </div>
             @else
             <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 text-sm text-yellow-700">
-                ⚠️ Link pembayaran gagal dikonfigurasi. Pastikan pengaturan sudah diatur di file <code>.env</code>.
+                ⚠️ Kode QRIS pembayaran gagal dikonfigurasi. Silakan hubungi admin atau coba buat pesanan baru.
             </div>
             @endif
 
@@ -52,10 +67,46 @@
 @endsection
 
 @push('scripts')
-@if(isset($paymentLink) && $paymentLink)
+@if($order->qris_string && $order->qris_expiry)
 <script>
-    // Bisa tambahkan auto redirect jika diinginkan
-    // window.location.href = "{{ $paymentLink }}";
+    // 1. Countdown Timer
+    const expiryTime = new Date("{{ $order->qris_expiry }}").getTime();
+
+    const countdownInterval = setInterval(function() {
+        const now = new Date().getTime();
+        const distance = expiryTime - now;
+
+        if (distance < 0) {
+            clearInterval(countdownInterval);
+            document.getElementById("countdown").innerHTML = "KADALUARSA";
+            document.getElementById("countdown").className = "text-xl font-black text-gray-400";
+            return;
+        }
+
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById("countdown").innerHTML = 
+            (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+    }, 1000);
+
+    // 2. Realtime AJAX Polling
+    const orderId = "{{ $order->id }}";
+    const statusPollInterval = setInterval(function() {
+        fetch(`/api/orders/${orderId}/status`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'dibayar') {
+                    clearInterval(statusPollInterval);
+                    clearInterval(countdownInterval);
+                    
+                    // Show success notification and redirect
+                    alert('Pembayaran Berhasil! Mengalihkan ke halaman detail pesanan...');
+                    window.location.href = "{{ route('orders.show', $order) }}";
+                }
+            })
+            .catch(err => console.error('Error polling status:', err));
+    }, 3000); // poll every 3 seconds
 </script>
 @endif
 @endpush

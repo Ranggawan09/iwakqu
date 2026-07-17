@@ -36,6 +36,12 @@ Route::post('/mayar/callback', [MayarController::class, 'callback'])
     ->name('mayar.callback')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
+// ShopeePay Webhook Callback (no CSRF — called by ShopeePay server)
+// Daftarkan URL ini di portal partner ShopeePay sebagai callback URL
+Route::post('/shopeepay/callback', [\App\Http\Controllers\ShopeePayController::class, 'callback'])
+    ->name('shopeepay.callback')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 // Mayar Payment Return — redirect target setelah user selesai bayar di Mayar
 // Tidak butuh auth agar session yang hilang saat redirect tidak menyebabkan error
 Route::get('/payment/return/{order}', [OrderController::class, 'paymentReturn'])
@@ -136,6 +142,9 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Voucher API ───────────────────────────────────────────────────────────
     Route::post('/api/vouchers/apply', [\App\Http\Controllers\VoucherController::class, 'apply'])->name('vouchers.apply');
+
+    // ── ShopeePay Status Poll API ─────────────────────────────────────────────
+    Route::get('/api/orders/{order}/status', [\App\Http\Controllers\ShopeePayController::class, 'checkStatus'])->name('orders.status-check');
 });
 
 // ─── Admin Routes ─────────────────────────────────────────────────────────────

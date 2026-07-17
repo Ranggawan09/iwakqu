@@ -215,23 +215,23 @@ class OrderController extends Controller
             ]);
         }
 
-        // ── Generate Mayar Payment Link ────────────────────────────────────────
-        $referenceId = 'IWAKQU-' . $order->id . '-' . time();
-        $mayarResult = $this->createMayarPayment($order, $referenceId, $carts, $shippingCost, $distanceKm);
-        $paymentLink = $mayarResult['link'] ?? null;
-        $mayarId = $mayarResult['mayar_id'] ?? null;
+        // ── Generate ShopeePay Dynamic QRIS ────────────────────────────────────
+        $shopeePayService = app(\App\Services\ShopeePayService::class);
+        $qrisResult = $shopeePayService->generateQRIS($order);
+        $qrisString = $qrisResult['qr_content'] ?? null;
+        $qrisExpiry = date('Y-m-d H:i:s', time() + 1200); // 20 minutes from now
 
-        if ($paymentLink) {
+        if ($qrisString) {
             $order->update([
-                'payment_link' => $paymentLink,
-                'mayar_id' => $mayarId,
+                'qris_string' => $qrisString,
+                'qris_expiry' => $qrisExpiry,
             ]);
         }
 
         // Clear cart
         Cart::where('user_id', auth()->id())->delete();
 
-        return view('customer.payment', compact('order', 'paymentLink'));
+        return view('customer.payment', compact('order'));
     }
 
     // =========================================================================
@@ -356,40 +356,25 @@ class OrderController extends Controller
                 ->with('error', 'Pesanan ini tidak perlu dibayar ulang.');
         }
 
-        // Jika belum ada payment_link, coba generate ulang dari order items
-        if (!$order->payment_link) {
-            $order->load('orderItems.product');
-            $referenceId = 'IWAKQU-' . $order->id . '-' . time();
+        // Jika belum ada QRIS atau QRIS sudah kadaluarsa, generate ulang
+        if (!$order->qris_string || ($order->qris_expiry && now()->gt($order->qris_expiry))) {
+            $shopeePayService = app(\App\Services\ShopeePayService::class);
+            $qrisResult = $shopeePayService->generateQRIS($order);
+            $qrisString = $qrisResult['qr_content'] ?? null;
+            $qrisExpiry = date('Y-m-d H:i:s', time() + 1200);
 
-            // Konversi orderItems ke koleksi seperti Cart untuk createMayarPayment
-            $fakeItems = $order->orderItems->map(fn($item) => (object) [
-                'product' => $item->product,
-                'quantity' => $item->quantity,
-            ]);
-
-            $mayarResult = $this->createMayarPayment(
-                $order,
-                $referenceId,
-                $fakeItems,
-                (float) $order->shipping_cost,
-                (float) ($order->distance_km ?? 0)
-            );
-
-            $paymentLink = $mayarResult['link'] ?? null;
-            $mayarId = $mayarResult['mayar_id'] ?? null;
-
-            if ($paymentLink) {
+            if ($qrisString) {
                 $order->update([
-                    'payment_link' => $paymentLink,
-                    'mayar_id' => $mayarId,
+                    'qris_string' => $qrisString,
+                    'qris_expiry' => $qrisExpiry,
                 ]);
             } else {
                 return redirect()->route('orders.show', $order)
-                    ->with('error', 'Link pembayaran tidak tersedia. Silakan hubungi kami.');
+                    ->with('error', 'Gagal memproses kode QRIS pembayaran. Silakan coba beberapa saat lagi.');
             }
         }
 
-        return redirect()->away($order->payment_link);
+        return redirect()->route('orders.show', $order);
     }
 
     // =========================================================================

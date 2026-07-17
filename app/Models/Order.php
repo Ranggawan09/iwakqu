@@ -22,6 +22,8 @@ class Order extends Model
         'snap_token',
         'payment_link',
         'mayar_id',
+        'qris_string',
+        'qris_expiry',
         'voucher_code',
         'voucher_discount',
         'global_discount_amount',

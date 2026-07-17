@@ -46,24 +46,31 @@
                         @endif
                     </div>
 
-                    {{-- Tombol lanjutkan pembayaran --}}
-                    @if($order->status === 'menunggu_pembayaran' && $order->payment_link)
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                            <p class="text-yellow-700 text-sm font-medium mb-3">
-                                ⏳ Pesanan ini belum dibayar. Selesaikan pembayaran sebelum batas waktu habis.
-                            </p>
-                            <a href="{{ $order->payment_link }}" target="_blank" rel="noopener"
-                                class="w-full bg-green-700 text-white py-3 rounded-xl font-bold text-base hover:bg-green-600 transition-all shadow-md flex items-center justify-center gap-2">
-                                Lanjutkan Pembayaran
-                            </a>
-                            <p class="text-xs text-gray-400 mt-2 text-center">Anda akan diarahkan ke halaman pembayaran Mayar
-                            </p>
-                        </div>
-                    @elseif($order->status === 'menunggu_pembayaran' && !$order->payment_link)
-                        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <p class="text-red-600 text-sm font-medium">Link pembayaran tidak tersedia. Silakan hubungi kami.
-                            </p>
-                        </div>
+                    {{-- Tombol lanjutkan pembayaran / QRIS --}}
+                    @if($order->status === 'menunggu_pembayaran')
+                        @if($order->qris_string)
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 text-center">
+                                <p class="text-yellow-700 text-sm font-semibold mb-4">
+                                    ⏳ Pesanan belum dibayar. Scan QRIS di bawah ini untuk menyelesaikan pembayaran:
+                                </p>
+                                <div class="inline-block p-3 bg-white rounded-2xl shadow-sm mb-4">
+                                    <div class="flex justify-between items-center mb-2 px-2">
+                                        <span class="text-[10px] font-bold text-gray-400">QRIS DYNAMIC</span>
+                                        <img src="https://gokepo.com/wp-content/uploads/2020/09/Logo-ShopeePay.png" alt="ShopeePay" class="h-4 object-contain">
+                                    </div>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($order->qris_string) }}" 
+                                         alt="QRIS ShopeePay" 
+                                         class="w-52 h-52 mx-auto rounded-xl">
+                                </div>
+                                <div class="text-xs text-gray-400 mb-1">Batas Waktu Pembayaran:</div>
+                                <div id="countdown" class="text-xl font-black text-red-600 mb-2">20:00</div>
+                                <p class="text-[10px] text-gray-400">Halaman ini akan otomatis diperbarui setelah pembayaran sukses.</p>
+                            </div>
+                        @else
+                            <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                                <p class="text-red-600 text-sm font-medium">QRIS pembayaran tidak tersedia. Silakan hubungi admin.</p>
+                            </div>
+                        @endif
                     @endif
                 </div>
 
@@ -217,3 +224,45 @@
         </div>
     </div>
 @endsection
+
+@if($order->status === 'menunggu_pembayaran' && $order->qris_string && $order->qris_expiry)
+    @push('scripts')
+    <script>
+        // 1. Countdown Timer
+        const expiryTime = new Date("{{ $order->qris_expiry }}").getTime();
+
+        const countdownInterval = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                document.getElementById("countdown").innerHTML = "KADALUARSA";
+                document.getElementById("countdown").className = "text-lg font-black text-gray-400";
+                return;
+            }
+
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("countdown").innerHTML = 
+                (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }, 1000);
+
+        // 2. Realtime AJAX Polling
+        const orderId = "{{ $order->id }}";
+        const statusPollInterval = setInterval(function() {
+            fetch(`/api/orders/${orderId}/status`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'dibayar') {
+                        clearInterval(statusPollInterval);
+                        clearInterval(countdownInterval);
+                        location.reload();
+                    }
+                })
+                .catch(err => console.error('Error polling status:', err));
+        }, 3000); // poll every 3 seconds
+    </script>
+    @endpush
+@endif

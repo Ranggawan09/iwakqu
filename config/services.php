@@ -42,6 +42,16 @@ return [
         // Production: https://api.mayar.id/hl/v1
     ],
 
+    'shopeepay' => [
+        'client_id' => env('SHOPEEPAY_CLIENT_ID', ''),
+        'client_secret' => env('SHOPEEPAY_CLIENT_SECRET', ''),
+        'merchant_id' => env('SHOPEEPAY_MERCHANT_ID', ''),
+        'external_store_id' => env('SHOPEEPAY_STORE_ID', ''),
+        'private_key' => env('SHOPEEPAY_PRIVATE_KEY', ''), // Raw private key string (with headers) OR path to private key PEM
+        'shopeepay_public_key' => env('SHOPEEPAY_PUBLIC_KEY', ''), // Raw ShopeePay public key string OR path to PEM file
+        'is_production' => env('SHOPEEPAY_IS_PRODUCTION', false),
+    ],
+
     'google' => [
         'client_id'     => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
